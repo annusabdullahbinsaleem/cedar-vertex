@@ -1,0 +1,100 @@
+@import "tailwindcss";
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/space-grotesk/700.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+
+/*
+  Cedar Vertex brand colour system
+  ---------------------------------
+  Source of truth: the two extracted values below are the ONLY colours
+  found in the official logo SVGs (public/logo/cedar-vertex-logo.svg and
+  cedar-vertex-mark.svg), confirmed by grepping every `fill:` value:
+    - #2c3e50 (also appears as the near-identical #2c3e50 throughout)  -> logo navy
+    - #00b7d9 / #06b4d7 (two near-identical logo cyans, <1% apart)     -> logo cyan
+  Everything else below (hover/tint/muted/background shades) is
+  mathematically derived from those two source colours — lightened,
+  darkened, or tinted — never a new unrelated hue.
+*/
+:root {
+  /* --- Extracted directly from the logo --- */
+  --primary: #2c3e50;      /* logo navy — dominant colour in the wordmark + icon */
+  --accent: #00b7d9;       /* logo cyan — the icon's stem/dot + tagline colour */
+
+  /* --- Derived from primary (navy) --- */
+  --ink: var(--primary);        /* body/heading text re-uses the exact wordmark navy */
+  --ink-soft: #5c6b7a;          /* navy, lightened — secondary/muted text */
+  --primary-dark: #1b2732;      /* navy, darkened ~20% — button hover + dark section bg */
+  --primary-tint: #e7eaed;      /* navy, tinted ~95% toward white — icon-chip backgrounds */
+
+  /* --- Derived from accent (cyan) --- */
+  --accent-dark: #067a91;       /* cyan, darkened for text/links — see note below */
+  --accent-tint: #dff5fa;       /* cyan, tinted ~95% toward white — icon-chip backgrounds */
+
+  /* --- Neutral scale, cooled to sit alongside navy + cyan --- */
+  --bg: #fbfbfa;
+  --surface: #f2f4f5;
+  --surface-2: #e9ebec;
+  --line: #e1e4e7;
+}
+
+/*
+  Note on --accent-dark: the raw logo cyan (#00b7d9) has only ~2.3:1
+  contrast against this site's light background — well under the 4.5:1
+  WCAG AA minimum for text. Using it directly as a text colour (nav
+  links, eyebrow labels, "View project" links) would be inaccessible.
+  --accent-dark is the same hue, darkened until it clears 4.5:1 (it
+  measures ~4.8:1), and is used anywhere the accent appears as text.
+  The undiluted --accent is reserved for non-text uses (icon chips,
+  gradients, decorative lines, dark-background accents) where WCAG's
+  non-text contrast rules apply instead.
+*/
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-tint: var(--primary-tint);
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-tint: var(--accent-tint);
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
