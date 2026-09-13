@@ -62,6 +62,14 @@ const timelineOptions = [
 ];
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const focusableSelector = [
+  'a[href]',
+  'button:not([disabled])',
+  'textarea:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(", ");
 
 export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -69,15 +77,65 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const initialInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const triggerElementRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
+    triggerElementRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        event.preventDefault();
         onClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || !modalRef.current) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        modalRef.current.querySelectorAll<HTMLElement>(focusableSelector),
+      ).filter((element) => {
+        const { display, visibility } = window.getComputedStyle(element);
+
+        return (
+          !element.hasAttribute("disabled") &&
+          element.getAttribute("aria-hidden") !== "true" &&
+          display !== "none" &&
+          visibility !== "hidden"
+        );
+      });
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        modalRef.current.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+
+      if (event.shiftKey) {
+        if (activeElement === firstElement || !modalRef.current.contains(activeElement)) {
+          event.preventDefault();
+          lastElement.focus();
+        }
+
+        return;
+      }
+
+      if (activeElement === lastElement || !modalRef.current.contains(activeElement)) {
+        event.preventDefault();
+        firstElement.focus();
       }
     };
 
@@ -93,17 +151,10 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
       window.clearTimeout(focusTimer);
+      triggerElementRef.current?.focus();
+      triggerElementRef.current = null;
     };
   }, [isOpen, onClose]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setErrors({});
-      setIsSubmitting(false);
-      setIsSubmitted(false);
-      setFormData(initialFormData);
-    }
-  }, [isOpen]);
 
   const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE_NUMBER}${
     WHATSAPP_MESSAGE ? `?text=${encodeURIComponent(WHATSAPP_MESSAGE)}` : ""
@@ -199,9 +250,11 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
       onClick={onClose}
     >
       <div
+        ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="proposal-modal-title"
+        tabIndex={-1}
         className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-line bg-bg text-ink shadow-[0_32px_80px_-28px_rgba(20,19,31,0.45)]"
         onClick={(event) => event.stopPropagation()}
       >

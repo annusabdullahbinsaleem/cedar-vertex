@@ -13,21 +13,28 @@ import ProposalModal from "@/components/ProposalModal";
 
 export default function Home() {
   const [isProposalOpen, setIsProposalOpen] = useState(false);
+  const [proposalModalKey, setProposalModalKey] = useState(0);
+
+  const handleOpenProposal = () => {
+    setProposalModalKey((current) => current + 1);
+    setIsProposalOpen(true);
+  };
 
   return (
     <>
       <ProposalModal
+        key={proposalModalKey}
         isOpen={isProposalOpen}
         onClose={() => setIsProposalOpen(false)}
       />
-      <Navbar onOpenProposal={() => setIsProposalOpen(true)} />
+      <Navbar onOpenProposal={handleOpenProposal} />
       <main id="main-content">
-        <Hero onOpenProposal={() => setIsProposalOpen(true)} />
+        <Hero onOpenProposal={handleOpenProposal} />
         <Services />
         <Work />
         <WhyUs />
         <Process />
-        <Cta onOpenProposal={() => setIsProposalOpen(true)} />
+        <Cta onOpenProposal={handleOpenProposal} />
       </main>
       <Footer />
     </>
