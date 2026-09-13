@@ -152,6 +152,13 @@ export default function Footer() {
                     <Image
                       src="/threads-icon.svg"
                       alt="Threads"
+                      width={16}
+                      height={16}
+                      className="h-4 w-4 opacity-75 hover:opacity-100 transition-opacity"
+                    />
+                  ),
+                  label: "Cedar Vertex on Threads",
+                },
               ].map(({ href, renderIcon, label }) => (
                 <a
                   key={label}

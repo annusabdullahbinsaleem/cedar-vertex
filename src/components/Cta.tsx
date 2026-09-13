@@ -1,6 +1,10 @@
 import Button from "./Button";
 
-export default function Cta() {
+type CtaProps = {
+  onOpenProposal?: () => void;
+};
+
+export default function Cta({ onOpenProposal }: CtaProps) {
   return (
     <section id="contact" className="px-6 py-20 lg:px-10 lg:py-28">
       <div className="mx-auto max-w-7xl">
@@ -21,12 +25,12 @@ export default function Cta() {
               hello@cedarvertex.com
             </Button>
             <Button
-              href="#top"
+              onClick={onOpenProposal}
               variant="secondary"
               showIcon={false}
               className="border-white/40! text-white! hover:bg-white! hover:text-ink!"
             >
-              Book a call
+              Get a Proposal
             </Button>
           </div>
         </div>

@@ -2,7 +2,11 @@ import Button from "./Button";
 import BristolSkyline from "./BristolSkyline";
 import { MapPin } from "lucide-react";
 
-export default function Hero() {
+type HeroProps = {
+  onOpenProposal?: () => void;
+};
+
+export default function Hero({ onOpenProposal }: HeroProps) {
   return (
     <section className="relative overflow-hidden px-6 pb-20 pt-16 lg:px-10 lg:pb-28 lg:pt-24">
       <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
@@ -18,8 +22,9 @@ export default function Hero() {
             digital products people actually enjoy using — from first sketch
             to launched software.
           </p>
+
           <div className="mt-9 flex flex-wrap items-center gap-4">
-            <Button href="#contact">Start a Project</Button>
+            <Button onClick={onOpenProposal}>Get a Proposal</Button>
             <Button href="#work" variant="secondary">
               See Our Work
             </Button>
@@ -49,6 +54,7 @@ export default function Hero() {
             className="absolute -inset-10 -z-10 rounded-full bg-accent/15 blur-3xl"
             aria-hidden="true"
           />
+
           <div className="relative overflow-hidden rounded-3xl border border-line bg-linear-to-b from-accent-tint to-white p-3 shadow-[0_30px_80px_-30px_rgba(20,19,31,0.25)]">
             <div className="relative">
               <BristolSkyline />

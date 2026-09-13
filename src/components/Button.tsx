@@ -3,11 +3,14 @@ import { ArrowUpRight } from "lucide-react";
 import type { ReactNode } from "react";
 
 type ButtonProps = {
-  href: string;
+  href?: string;
   children: ReactNode;
   variant?: "primary" | "secondary" | "ghost-light";
   showIcon?: boolean;
   className?: string;
+  onClick?: () => void;
+  type?: "button" | "submit" | "reset";
+  disabled?: boolean;
 };
 
 const variants = {
@@ -25,11 +28,33 @@ export default function Button({
   variant = "primary",
   showIcon = true,
   className = "",
+  onClick,
+  type = "button",
+  disabled = false,
 }: ButtonProps) {
+  const classes = `group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition-colors duration-200 ${variants[variant]} ${className}`;
+
+  if (href) {
+    return (
+      <Link href={href} className={classes}>
+        {children}
+        {showIcon && (
+          <ArrowUpRight
+            size={16}
+            className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            aria-hidden="true"
+          />
+        )}
+      </Link>
+    );
+  }
+
   return (
-    <Link
-      href={href}
-      className={`group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition-colors duration-200 ${variants[variant]} ${className}`}
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={classes}
     >
       {children}
       {showIcon && (
@@ -39,6 +64,6 @@ export default function Button({
           aria-hidden="true"
         />
       )}
-    </Link>
+    </button>
   );
 }

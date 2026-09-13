@@ -14,7 +14,11 @@ const navLinks = [
   { label: "Contact", href: "#contact" },
 ];
 
-export default function Navbar() {
+type NavbarProps = {
+  onOpenProposal?: () => void;
+};
+
+export default function Navbar({ onOpenProposal }: NavbarProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -51,8 +55,8 @@ export default function Navbar() {
         </ul>
 
         <div className="hidden md:block">
-          <Button href="#contact" className="px-5! py-2.5!">
-            Start a Project
+          <Button onClick={onOpenProposal} className="px-5! py-2.5!">
+            Get a Proposal
           </Button>
         </div>
 
@@ -86,8 +90,8 @@ export default function Navbar() {
               </li>
             ))}
           </ul>
-          <Button href="#contact" className="mt-4 w-full justify-center">
-            Start a Project
+          <Button onClick={onOpenProposal} className="mt-4 w-full justify-center">
+            Get a Proposal
           </Button>
         </div>
       )}
