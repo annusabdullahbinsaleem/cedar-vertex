@@ -51,10 +51,10 @@ const TIKTOK_URL = "https://www.tiktok.com/@cedarvertex";
 const THREADS_URL = "https://www.threads.net/@cedarvertex";
 
 const nav = [
-  { label: "Home", href: "#top" },
-  { label: "Work", href: "#work" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { label: "Home", href: "/" },
+  { label: "Work", href: "/#work" },
+  { label: "About", href: "/#about" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 const services = [
@@ -178,10 +178,10 @@ export default function Footer() {
         <div className="mt-14 flex flex-col gap-3 border-t border-line pt-6 text-xs text-ink-soft sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Cedar Vertex. All rights reserved.</p>
           <div className="flex gap-5">
-            <Link href="#" className="hover:text-accent-dark">
+            <Link href="/privacy-policy" className="hover:text-accent-dark">
               Privacy Policy
             </Link>
-            <Link href="#" className="hover:text-accent-dark">
+            <Link href="/terms-of-service" className="hover:text-accent-dark">
               Terms of Service
             </Link>
           </div>

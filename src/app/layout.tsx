@@ -30,9 +30,24 @@ export const metadata: Metadata = {
     description:
       "A design and technology studio helping businesses turn ideas into modern digital products.",
   },
+  manifest: "/site.webmanifest",
   icons: {
-    icon: "/logo/cedar-vertex-mark.svg",
-    apple: "/logo/cedar-vertex-mark.svg",
+    icon: [
+      {
+        url: "/favicon-96x96.png",
+        sizes: "96x96",
+        type: "image/png",
+      },
+      {
+        url: "/favicon.svg",
+        type: "image/svg+xml",
+      },
+      {
+        url: "/favicon.ico",
+      },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
 };
 

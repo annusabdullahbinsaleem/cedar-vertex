@@ -246,7 +246,7 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f172a]/50 p-3 backdrop-blur-[1px] sm:p-6"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0f172a]/50 p-3 backdrop-blur-[1px] sm:p-6"
       onClick={onClose}
     >
       <div
@@ -255,10 +255,10 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
         aria-modal="true"
         aria-labelledby="proposal-modal-title"
         tabIndex={-1}
-        className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-line bg-bg text-ink shadow-[0_32px_80px_-28px_rgba(20,19,31,0.45)]"
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-3xl border border-line bg-bg text-ink shadow-[0_32px_80px_-28px_rgba(20,19,31,0.45)]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
+        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-bg/95 px-5 py-4 backdrop-blur-sm sm:px-6">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.12em] text-accent-dark">
               Cedar Vertex
@@ -278,7 +278,7 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
           </button>
         </div>
 
-        <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
+        <div className="max-h-[calc(90vh-5.5rem)] overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
           {isSubmitted ? (
             <div className="space-y-4">
               <div className="rounded-2xl border border-line bg-accent-tint p-4 text-sm leading-relaxed text-ink">
@@ -481,24 +481,33 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                 </p>
               )}
 
-              <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-3 pt-1">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-70"
+                  className="w-full rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isSubmitting ? "Sending..." : "Get My Proposal"}
                 </button>
 
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-accent-dark transition-colors hover:text-primary"
-                >
-                  <MessageCircle size={16} aria-hidden="true" />
-                  Prefer a quick chat? Message us on WhatsApp.
-                </a>
+                <p className="text-center text-xs leading-relaxed text-slate-500">
+                  By submitting, you agree to our Privacy Policy. We use your details only to respond to your enquiry.
+                </p>
+
+                <div className="border-t border-slate-100 pt-3">
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-accent-dark transition-colors hover:text-primary"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <MessageCircle size={16} aria-hidden="true" />
+                      <span>Prefer a quick chat?</span>
+                    </span>
+                    <span>Message us on WhatsApp.</span>
+                  </a>
+                </div>
               </div>
             </form>
           )}

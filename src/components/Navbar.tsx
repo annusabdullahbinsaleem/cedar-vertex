@@ -7,11 +7,11 @@ import { Menu, X } from "lucide-react";
 import Button from "./Button";
 
 const navLinks = [
-  { label: "Home", href: "#top" },
-  { label: "Services", href: "#services" },
-  { label: "Work", href: "#work" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { label: "Home", href: "/" },
+  { label: "Services", href: "/#services" },
+  { label: "Work", href: "/#work" },
+  { label: "About", href: "/#about" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 type NavbarProps = {
@@ -30,7 +30,7 @@ export default function Navbar({ onOpenProposal }: NavbarProps) {
         aria-label="Primary"
         className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10"
       >
-        <Link href="#top" className="flex items-center" aria-label="Cedar Vertex home">
+        <Link href="/" className="flex items-center" aria-label="Cedar Vertex home">
           <Image
             src="/logo/cedar-vertex-logo.svg"
             alt="Cedar Vertex"
