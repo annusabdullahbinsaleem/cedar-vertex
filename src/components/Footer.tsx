@@ -17,6 +17,14 @@ function LinkedInIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+function FacebookIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+    </svg>
+  );
+}
+
 function InstagramIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
@@ -26,6 +34,21 @@ function InstagramIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+function TikTokIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 1 1-2.896-2.896c.244 0 .484.03.714.086V9.336a6.34 6.34 0 0 0-.714-.042 6.34 6.34 0 1 0 6.34 6.34V8.718a8.21 8.21 0 0 0 4.771 1.493V6.766a4.814 4.814 0 0 1-1.000-.08z"/>
+    </svg>
+  );
+}
+
+const X_URL = "https://x.com/cedarvertex";
+const LINKEDIN_URL = "https://www.linkedin.com/company/cedar-vertex/";
+const FACEBOOK_URL = "https://www.facebook.com/cedarvertex";
+const INSTAGRAM_URL = "https://www.instagram.com/cedarvertex/";
+const TIKTOK_URL = "https://www.tiktok.com/@cedarvertex";
+const THREADS_URL = "https://www.threads.net/@cedarvertex";
 
 const nav = [
   { label: "Home", href: "#top" },
@@ -102,17 +125,43 @@ export default function Footer() {
             </ul>
             <div className="mt-5 flex gap-3">
               {[
-                { Icon: XIcon, label: "Cedar Vertex on X" },
-                { Icon: LinkedInIcon, label: "Cedar Vertex on LinkedIn" },
-                { Icon: InstagramIcon, label: "Cedar Vertex on Instagram" },
-              ].map(({ Icon, label }) => (
+                { href: X_URL, renderIcon: () => <XIcon width={16} height={16} aria-hidden="true" />, label: "Cedar Vertex on X" },
+                {
+                  href: LINKEDIN_URL,
+                  renderIcon: () => <LinkedInIcon width={16} height={16} aria-hidden="true" />,
+                  label: "Cedar Vertex on LinkedIn",
+                },
+                {
+                  href: FACEBOOK_URL,
+                  renderIcon: () => <FacebookIcon width={16} height={16} aria-hidden="true" />,
+                  label: "Cedar Vertex on Facebook",
+                },
+                {
+                  href: INSTAGRAM_URL,
+                  renderIcon: () => <InstagramIcon width={16} height={16} aria-hidden="true" />,
+                  label: "Cedar Vertex on Instagram",
+                },
+                {
+                  href: TIKTOK_URL,
+                  renderIcon: () => <TikTokIcon width={16} height={16} aria-hidden="true" />,
+                  label: "Cedar Vertex on TikTok",
+                },
+                {
+                  href: THREADS_URL,
+                  renderIcon: () => (
+                    <Image
+                      src="/threads-icon.svg"
+                      alt="Threads"
+              ].map(({ href, renderIcon, label }) => (
                 <a
                   key={label}
-                  href="#"
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={label}
                   className="flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-accent hover:text-accent-dark"
                 >
-                  <Icon width={16} height={16} aria-hidden="true" />
+                  {renderIcon()}
                 </a>
               ))}
             </div>
