@@ -1,7 +1,8 @@
 "use client";
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import { MessageCircle, X } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, MessageCircle, X } from "lucide-react";
 import {
   WHATSAPP_MESSAGE,
   WHATSAPP_PHONE_NUMBER,
@@ -61,7 +62,7 @@ const timelineOptions = [
   "Flexible / Not sure",
 ];
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailPattern = /^[A-Za-z0-9!#$%&*+/=?^_`{|}~-]+(?:'[A-Za-z0-9!#$%&*+/=?^_`{|}~-]+)*(?:\.[A-Za-z0-9!#$%&*+/=?^_`{|}~-]+(?:'[A-Za-z0-9!#$%&*+/=?^_`{|}~-]+)*)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/;
 const focusableSelector = [
   'a[href]',
   'button:not([disabled])',
@@ -264,7 +265,7 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
               Cedar Vertex
             </p>
             <h2 id="proposal-modal-title" className="mt-1 font-display text-2xl">
-              Get a Proposal
+              {isSubmitted ? "Proposal Received!" : "Get a Proposal"}
             </h2>
           </div>
 
@@ -280,19 +281,40 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
 
         <div className="max-h-[calc(90vh-5.5rem)] overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
           {isSubmitted ? (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-line bg-accent-tint p-4 text-sm leading-relaxed text-ink">
-                Thanks for reaching out. We&apos;ve received your project details
-                and will get back to you soon.
+            <div className="space-y-5">
+              <div className="flex flex-col items-center rounded-2xl border border-line bg-accent-tint px-4 py-6 text-center sm:px-6">
+                <CheckCircle2
+                  className="text-accent-dark"
+                  size={48}
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                />
+                <p className="mt-4 text-base font-medium text-ink">
+                  Thanks for reaching out to Cedar Vertex. We&apos;ve received your
+                  project details and will review them carefully.
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                  We&apos;ll review your request and get back to you as soon as
+                  possible.
+                </p>
               </div>
 
-              <button
-                type="button"
-                onClick={onClose}
-                className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
-              >
-                Close
-              </button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/#work"
+                  onClick={onClose}
+                  className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
+                >
+                  Explore Our Work
+                </Link>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-line px-6 py-3 text-sm font-medium text-ink transition-colors hover:border-accent hover:text-accent-dark"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           ) : (
             <form className="space-y-5" onSubmit={handleSubmit} noValidate>
@@ -485,9 +507,21 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                 <button
                   type="submit"
                   disabled={isSubmitting}
+                  aria-busy={isSubmitting}
                   className="w-full rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {isSubmitting ? "Sending..." : "Get My Proposal"}
+                  {isSubmitting ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <span
+                        className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white"
+                        aria-hidden="true"
+                      />
+                      <span>Sending...</span>
+                      <span className="sr-only">Your proposal is being sent.</span>
+                    </span>
+                  ) : (
+                    "Get My Proposal"
+                  )}
                 </button>
 
                 <p className="text-center text-xs leading-relaxed text-slate-500">
