@@ -2,7 +2,7 @@
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, MessageCircle, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, MessageCircle, X } from "lucide-react";
 import {
   WHATSAPP_MESSAGE,
   WHATSAPP_PHONE_NUMBER,
@@ -402,23 +402,31 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                   <label htmlFor="proposal-project-type" className="text-sm font-medium text-ink">
                     Project Type
                   </label>
-                  <select
-                    id="proposal-project-type"
-                    name="projectType"
-                    value={formData.projectType}
-                    onChange={updateField}
-                    aria-invalid={Boolean(errors.projectType)}
-                    aria-describedby={errors.projectType ? "proposal-project-type-error" : undefined}
-                    className="w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent"
-                    required
-                  >
-                    <option value="">Select an option</option>
-                    {projectTypeOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="proposal-project-type"
+                      name="projectType"
+                      value={formData.projectType}
+                      onChange={updateField}
+                      aria-invalid={Boolean(errors.projectType)}
+                      aria-describedby={errors.projectType ? "proposal-project-type-error" : undefined}
+                      className="w-full appearance-none rounded-xl border border-line bg-white px-3.5 py-2.5 pr-12 text-sm text-ink outline-none transition-colors focus:border-accent"
+                      required
+                    >
+                      <option value="">Select an option</option>
+                      {projectTypeOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-soft"
+                      size={16}
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    />
+                  </div>
                   {errors.projectType && (
                     <p
                       id="proposal-project-type-error"
@@ -460,40 +468,56 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                   <label htmlFor="proposal-budget" className="text-sm font-medium text-ink">
                     Approximate Budget
                   </label>
-                  <select
-                    id="proposal-budget"
-                    name="budget"
-                    value={formData.budget}
-                    onChange={updateField}
-                    className="w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent"
-                  >
-                    <option value="">Select an option</option>
-                    {budgetOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="proposal-budget"
+                      name="budget"
+                      value={formData.budget}
+                      onChange={updateField}
+                      className="w-full appearance-none rounded-xl border border-line bg-white px-3.5 py-2.5 pr-12 text-sm text-ink outline-none transition-colors focus:border-accent"
+                    >
+                      <option value="">Select an option</option>
+                      {budgetOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-soft"
+                      size={16}
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
                   <label htmlFor="proposal-timeline" className="text-sm font-medium text-ink">
                     Timeline
                   </label>
-                  <select
-                    id="proposal-timeline"
-                    name="timeline"
-                    value={formData.timeline}
-                    onChange={updateField}
-                    className="w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent"
-                  >
-                    <option value="">Select an option</option>
-                    {timelineOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="proposal-timeline"
+                      name="timeline"
+                      value={formData.timeline}
+                      onChange={updateField}
+                      className="w-full appearance-none rounded-xl border border-line bg-white px-3.5 py-2.5 pr-12 text-sm text-ink outline-none transition-colors focus:border-accent"
+                    >
+                      <option value="">Select an option</option>
+                      {timelineOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-soft"
+                      size={16}
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    />
+                  </div>
                 </div>
               </div>
 
