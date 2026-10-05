@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import styles from "./TeamSection.module.css";
 
 type TeamMember = {
   name: string;
@@ -39,26 +40,26 @@ function LinkedInIcon() {
 
 function TeamMemberCard({ member }: { member: TeamMember }) {
   return (
-    <article className="group flex flex-col">
+    <article className="flex flex-col">
       <div className="relative overflow-hidden rounded-[1.5rem] border border-line bg-surface">
-        <div className="relative aspect-[4/5] overflow-hidden">
+        <div className={`relative aspect-[4/5] overflow-hidden ${styles.imageFrame}`}>
           <Image
             src={member.image}
             alt={member.name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+            className="h-full w-full object-cover"
           />
 
-          <div className="absolute inset-0 bg-primary/45 opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100" />
+          <div aria-hidden="true" className={styles.overlay} />
 
-          <div className="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+          <div className={styles.actions}>
             <Link
               href={member.linkedin}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`View ${member.name} on LinkedIn`}
-              className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/45 bg-white/10 text-white shadow-sm backdrop-blur-sm transition-colors duration-200 hover:bg-white hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary/60"
+              className={`inline-flex h-12 w-12 items-center justify-center rounded-full border border-line bg-white text-primary shadow-sm transition-colors duration-200 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-white ${styles.linkedin}`}
             >
               <LinkedInIcon />
             </Link>
