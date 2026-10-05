@@ -6,6 +6,7 @@ import Hero from "@/components/Hero";
 import Services from "@/components/Services";
 import Work from "@/components/Work";
 import WhyUs from "@/components/WhyUs";
+import TeamSection from "@/components/TeamSection";
 import Process from "@/components/Process";
 import Cta from "@/components/Cta";
 import Footer from "@/components/Footer";
@@ -33,6 +34,7 @@ export default function Home() {
         <Services />
         <Work />
         <WhyUs />
+        <TeamSection />
         <Process />
         <Cta onOpenProposal={handleOpenProposal} />
       </main>
