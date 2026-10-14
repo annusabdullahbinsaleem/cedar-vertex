@@ -1,26 +1,27 @@
 import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 
 const projects = [
   {
     name: "Marlow & Co.",
+    image: "/images/portfolio/ez-beauty-banner.png",
     category: "E-commerce · Web Development",
     description:
       "A rebuilt online store for a homeware retailer, cutting page load times and lifting mobile conversion.",
-    gradient: "from-primary to-primary-dark",
   },
   {
     name: "Harbourline Health",
+    image: "/images/portfolio/instant-pay-banner.png",
     category: "Product Design · Accessibility",
     description:
       "An appointment-booking platform redesigned around an AA accessibility standard, used across 12 clinics.",
-    gradient: "from-accent to-accent-dark",
   },
   {
     name: "Fenwick Transit",
+    image: "/images/portfolio/tohito-banner.png",
     category: "Mobile App · UX",
     description:
       "A journey-planning app for a regional transport operator, built for iOS and Android from one codebase.",
-    gradient: "from-primary to-accent-dark",
   },
 ];
 
@@ -47,10 +48,15 @@ export default function Work() {
               key={project.name}
               className="overflow-hidden rounded-2xl border border-line bg-white"
             >
-              <div
-                className={`h-44 bg-gradient-to-br ${project.gradient}`}
-                aria-hidden="true"
-              />
+              <div className="relative h-44 overflow-hidden" aria-hidden="true">
+                <Image
+                  src={project.image}
+                  alt=""
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 33vw"
+                  className="object-cover"
+                />
+              </div>
               <div className="p-6">
                 <p className="text-xs font-medium uppercase tracking-wide text-accent-dark">
                   {project.category}
