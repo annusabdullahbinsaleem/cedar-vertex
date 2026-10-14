@@ -48,7 +48,10 @@ export default function Work() {
               key={project.name}
               className="overflow-hidden rounded-2xl border border-line bg-white"
             >
-              <div className="relative h-44 overflow-hidden" aria-hidden="true">
+              <div
+                className="relative aspect-[2/1] w-full overflow-hidden"
+                aria-hidden="true"
+              >
                 <Image
                   src={project.image}
                   alt=""
