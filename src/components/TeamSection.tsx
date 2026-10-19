@@ -86,7 +86,7 @@ export default function TeamSection() {
           </h2>
         </div>
 
-        <div className="mt-12 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+        <div className={`mt-12 grid gap-8 md:grid-cols-2 xl:grid-cols-3 ${styles.teamGrid}`}>
           {teamMembers.map((member) => (
             <TeamMemberCard key={member.name} member={member} />
           ))}

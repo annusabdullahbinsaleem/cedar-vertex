@@ -2,6 +2,14 @@
   isolation: isolate;
 }
 
+@media (min-width: 48rem) and (max-width: 79.999rem) {
+  .teamGrid > article:last-child {
+    grid-column: 1 / -1;
+    width: calc((100% - 2rem) / 2);
+    justify-self: center;
+  }
+}
+
 .overlay {
   position: absolute;
   z-index: 1;

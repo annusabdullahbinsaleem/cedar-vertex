@@ -66,7 +66,7 @@ const services = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-line bg-surface px-6 pt-16 pb-8 lg:px-10">
+    <footer className="border-t border-line bg-surface px-6 pt-16 pb-20 md:pb-24 lg:px-10">
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
           <div>
@@ -123,7 +123,7 @@ export default function Footer() {
               </li>
               <li>Bristol, United Kingdom</li>
             </ul>
-            <div className="mt-5 flex gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               {[
                 { href: X_URL, renderIcon: () => <XIcon width={16} height={16} aria-hidden="true" />, label: "Cedar Vertex on X" },
                 {
@@ -166,7 +166,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-accent hover:text-accent-dark"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-accent hover:text-accent-dark"
                 >
                   {renderIcon()}
                 </a>
