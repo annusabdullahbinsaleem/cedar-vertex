@@ -34,6 +34,59 @@ const initialFormData: FormData = {
   budget: "",
   timeline: "",
 };
+const idempotencyStorageKey = "cedar-vertex-proposal-retry";
+const idempotencyKeyPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const payloadFingerprintPattern = /^[0-9a-f]{64}$/;
+
+type PendingSubmission = {
+  fingerprint: string;
+  key: string;
+};
+
+function isPendingSubmission(value: unknown): value is PendingSubmission {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "fingerprint" in value &&
+    typeof value.fingerprint === "string" &&
+    payloadFingerprintPattern.test(value.fingerprint) &&
+    "key" in value &&
+    typeof value.key === "string" &&
+    idempotencyKeyPattern.test(value.key)
+  );
+}
+
+function readPendingSubmissions(): PendingSubmission[] {
+  const pendingValue = window.localStorage.getItem(idempotencyStorageKey);
+  let pending: PendingSubmission[] = [];
+
+  if (pendingValue !== null) {
+    const parsed: unknown = JSON.parse(pendingValue);
+    if (!Array.isArray(parsed) || !parsed.every(isPendingSubmission)) {
+      throw new Error("Saved proposal retry information is invalid.");
+    }
+    pending = parsed;
+  }
+
+  const legacyValue = window.sessionStorage.getItem(idempotencyStorageKey);
+  if (legacyValue !== null) {
+    const legacy: unknown = JSON.parse(legacyValue);
+    if (isPendingSubmission(legacy) && !pending.some(({ key }) => key === legacy.key)) {
+      pending = [...pending, legacy];
+    }
+  }
+
+  return pending;
+}
+
+function writePendingSubmissions(pending: PendingSubmission[]) {
+  if (pending.length === 0) {
+    window.localStorage.removeItem(idempotencyStorageKey);
+    return;
+  }
+  window.localStorage.setItem(idempotencyStorageKey, JSON.stringify(pending));
+}
 
 const projectTypeOptions = [
   "Website",
@@ -77,9 +130,15 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [requiresNewSubmissionConfirmation, setRequiresNewSubmissionConfirmation] =
+    useState(false);
   const initialInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const triggerElementRef = useRef<HTMLElement | null>(null);
+  const isSubmittingRef = useRef(false);
+  const idempotencyRef = useRef<{ payload: string; key: string } | null>(null);
+  const allowNewSubmissionRef = useRef(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -166,6 +225,10 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >,
   ) => {
+    if (isSubmittingRef.current) {
+      return;
+    }
+
     const { name, value } = event.target;
 
     setFormData((current) => ({
@@ -210,6 +273,11 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const allowNewSubmission = allowNewSubmissionRef.current;
+    allowNewSubmissionRef.current = false;
+    if (isSubmittingRef.current) {
+      return;
+    }
 
     const nextErrors = validateForm(formData);
 
@@ -220,23 +288,103 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
     }
 
     setErrors({});
+    const payload = JSON.stringify(formData);
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     try {
-      // Replace this placeholder with a real form submission endpoint when available.
-      // Example:
-      // await fetch("/api/proposal", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(formData),
-      // });
+      const fingerprint = Array.from(
+        new Uint8Array(
+          await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode(payload),
+          ),
+        ),
+        (byte) => byte.toString(16).padStart(2, "0"),
+      ).join("");
+      let pendingSubmissions: PendingSubmission[];
+      try {
+        pendingSubmissions = readPendingSubmissions();
+      } catch {
+        setErrors({
+          form: "We couldn't safely check your previous submission. Please enable browser storage and try again.",
+        });
+        return;
+      }
 
+      let idempotencyKey =
+        idempotencyRef.current?.payload === payload
+          ? idempotencyRef.current.key
+          : pendingSubmissions.find((entry) => entry.fingerprint === fingerprint)?.key;
+
+      if (
+        !idempotencyKey &&
+        pendingSubmissions.length > 0 &&
+        !allowNewSubmission
+      ) {
+        setRequiresNewSubmissionConfirmation(true);
+        setErrors({
+          form: "A previous proposal may already have been saved. Restore its original details to retry safely, or choose below to send the edited details as a separate proposal.",
+        });
+        return;
+      }
+
+      idempotencyKey ??= crypto.randomUUID();
+      setRequiresNewSubmissionConfirmation(false);
+      idempotencyRef.current = { payload, key: idempotencyKey };
+
+      const pendingEntry = { fingerprint, key: idempotencyKey };
+      if (!pendingSubmissions.some(({ key }) => key === idempotencyKey)) {
+        pendingSubmissions = [...pendingSubmissions, pendingEntry];
+      }
+      try {
+        writePendingSubmissions(pendingSubmissions);
+      } catch {
+        setErrors({
+          form: "We couldn't save a retry key in this browser, so your proposal was not sent. Enable browser storage and try again.",
+        });
+        return;
+      }
+
+      const response = await fetch("/api/proposal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, idempotencyKey }),
+      });
+      const result: unknown = await response.json();
+      if (
+        !response.ok ||
+        typeof result !== "object" ||
+        result === null ||
+        !("success" in result) ||
+        result.success !== true
+      ) {
+        throw new Error("Proposal submission was not confirmed.");
+      }
+
+      idempotencyRef.current = null;
+      pendingSubmissions = pendingSubmissions.filter(
+        ({ key }) => key !== idempotencyKey,
+      );
+      try {
+        writePendingSubmissions(pendingSubmissions);
+        const legacyValue = window.sessionStorage.getItem(idempotencyStorageKey);
+        if (legacyValue !== null) {
+          const legacy: unknown = JSON.parse(legacyValue);
+          if (isPendingSubmission(legacy) && legacy.key === idempotencyKey) {
+            window.sessionStorage.removeItem(idempotencyStorageKey);
+          }
+        }
+      } catch {
+        console.warn("Could not clear completed proposal retry metadata.");
+      }
       setIsSubmitted(true);
     } catch {
       setErrors({
         form: "Something went wrong while sending your message. Please try again.",
       });
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -317,7 +465,12 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
               </div>
             </div>
           ) : (
-            <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+            <form
+              ref={formRef}
+              className="space-y-5"
+              onSubmit={handleSubmit}
+              noValidate
+            >
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5 sm:col-span-1">
                   <label htmlFor="proposal-name" className="text-sm font-medium text-ink">
@@ -522,9 +675,27 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
               </div>
 
               {errors.form && (
-                <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {errors.form}
-                </p>
+                <div
+                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                  role="alert"
+                >
+                  <p>{errors.form}</p>
+                  {requiresNewSubmissionConfirmation && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const form = formRef.current;
+                        if (form) {
+                          allowNewSubmissionRef.current = true;
+                          form.requestSubmit();
+                        }
+                      }}
+                      className="mt-2 font-semibold underline"
+                    >
+                      Send edited details as a separate proposal
+                    </button>
+                  )}
+                </div>
               )}
 
               <div className="space-y-3 pt-1">
