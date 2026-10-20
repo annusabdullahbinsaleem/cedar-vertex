@@ -6,6 +6,18 @@ export const metadata: Metadata = {
   title: "Terms of Service | Cedar Vertex",
   description:
     "Terms of Service for Cedar Vertex, a Bristol-based technology and digital services business.",
+  alternates: {
+    canonical: "/terms-of-service",
+  },
+  openGraph: {
+    title: "Terms of Service | Cedar Vertex",
+    description:
+      "Terms of Service for Cedar Vertex, a Bristol-based technology and digital services business.",
+    url: "/terms-of-service",
+    siteName: "Cedar Vertex",
+    type: "website",
+    locale: "en_GB",
+  },
 };
 
 const businessEmail = "hello@cedarvertex.com";

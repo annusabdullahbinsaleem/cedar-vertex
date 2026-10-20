@@ -3,7 +3,10 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://cedarvertex.com"),
+  metadataBase: new URL("https://www.cedarvertex.com"),
+  alternates: {
+    canonical: "/",
+  },
   title: "Cedar Vertex | Digital Design & Technology Studio",
   description:
     "Cedar Vertex helps businesses create modern digital experiences through UI/UX design, web development, mobile development, accessibility, SEO and digital branding.",
@@ -19,7 +22,7 @@ export const metadata: Metadata = {
     title: "Cedar Vertex | Digital Design & Technology Studio",
     description:
       "A design and technology studio helping businesses turn ideas into modern digital products.",
-    url: "https://cedarvertex.com",
+    url: "https://www.cedarvertex.com",
     siteName: "Cedar Vertex",
     type: "website",
     locale: "en_GB",

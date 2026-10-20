@@ -6,6 +6,18 @@ export const metadata: Metadata = {
   title: "Privacy Policy | Cedar Vertex",
   description:
     "Privacy Policy for Cedar Vertex, a Bristol-based technology and digital services business.",
+  alternates: {
+    canonical: "/privacy-policy",
+  },
+  openGraph: {
+    title: "Privacy Policy | Cedar Vertex",
+    description:
+      "Privacy Policy for Cedar Vertex, a Bristol-based technology and digital services business.",
+    url: "/privacy-policy",
+    siteName: "Cedar Vertex",
+    type: "website",
+    locale: "en_GB",
+  },
 };
 
 const businessEmail = "hello@cedarvertex.com";
