@@ -6,6 +6,8 @@ export default defineConfig({
 		name: "cedar-vertex-lead-submission",
 		compatibilityDate: "2026-10-19",
 		entrypoint,
+		domains: ["api.cedarvertex.com"],
+		workersDev: true,
 		exports: {
 			LeadReplayGuard: exports.durableObject({ storage: "sqlite" }),
 		},
