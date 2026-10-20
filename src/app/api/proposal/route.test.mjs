@@ -41,6 +41,62 @@ function createRequest(ip) {
   });
 }
 
+async function runWithWorkerResponse(workerResponse, ip) {
+  const originalFetch = globalThis.fetch;
+  const originalConsoleError = console.error;
+  const originals = {
+    PROPOSAL_WORKER_URL: process.env.PROPOSAL_WORKER_URL,
+    PROPOSAL_WORKER_SECRET: process.env.PROPOSAL_WORKER_SECRET,
+    NODE_ENV: process.env.NODE_ENV,
+  };
+  const diagnostics = [];
+
+  setTestEnvironment();
+  globalThis.fetch = async () => workerResponse;
+  console.error = (...args) => diagnostics.push(args.join(" "));
+
+  try {
+    return {
+      response: await POST(createRequest(ip)),
+      diagnostics,
+    };
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.error = originalConsoleError;
+    restoreEnvironment(originals);
+  }
+}
+
+function assertSafeWorkerDiagnostic(diagnostics, reason, status, workerResponseBody) {
+  assert.equal(diagnostics.length, 1);
+  const serializedDiagnostic = diagnostics[0];
+  const diagnostic = JSON.parse(serializedDiagnostic);
+  assert.deepEqual(Object.keys(diagnostic).sort(), [
+    "event",
+    "reason",
+    "requestId",
+    "status",
+  ]);
+  assert.equal(diagnostic.event, "proposal_worker_response_rejected");
+  assert.equal(diagnostic.reason, reason);
+  assert.equal(diagnostic.status, status);
+  assert.match(
+    diagnostic.requestId,
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  );
+  for (const value of [
+    submission.name,
+    submission.email,
+    submission.company,
+    submission.description,
+    workerResponseBody,
+  ]) {
+    if (value) {
+      assert.equal(serializedDiagnostic.includes(value), false);
+    }
+  }
+}
+
 test("signs request and idempotency identifiers and rejects redirects", async () => {
   const originalFetch = globalThis.fetch;
   const originals = {
@@ -277,28 +333,176 @@ test("preserves the submission key across retries with fresh replay identifiers"
   }
 });
 
-test("does not report success when the Worker does not confirm the save", async () => {
-  const originalFetch = globalThis.fetch;
-  const originals = {
-    PROPOSAL_WORKER_URL: process.env.PROPOSAL_WORKER_URL,
-    PROPOSAL_WORKER_SECRET: process.env.PROPOSAL_WORKER_SECRET,
-    NODE_ENV: process.env.NODE_ENV,
-  };
+test("logs a safe diagnostic for non-201 Worker responses", async () => {
+  for (const [index, status] of [401, 409, 500].entries()) {
+    const workerResponseBody = `private-worker-response-${status}`;
+    const { response, diagnostics } = await runWithWorkerResponse(
+      Response.json({ error: workerResponseBody }, { status }),
+      `198.51.100.${60 + index}`,
+    );
 
-  setTestEnvironment();
-  globalThis.fetch = async () =>
-    Response.json({ error: "Conflict." }, { status: 409 });
-
-  try {
-    const response = await POST(createRequest("198.51.100.45"));
     assert.equal(response.status, 502);
     assert.deepEqual(await response.json(), {
       error: "Unable to save your proposal. Please try again.",
     });
-  } finally {
-    globalThis.fetch = originalFetch;
-    restoreEnvironment(originals);
+    assertSafeWorkerDiagnostic(diagnostics, "non_201", status, workerResponseBody);
   }
+});
+
+test("logs a safe diagnostic for an unexpected Worker content type", async () => {
+  const workerResponseBody = "private-worker-response-body";
+  const { response, diagnostics } = await runWithWorkerResponse(
+    new Response(workerResponseBody, {
+      status: 201,
+      headers: { "Content-Type": "text/plain" },
+    }),
+    "198.51.100.63",
+  );
+
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), {
+    error: "Unable to save your proposal. Please try again.",
+  });
+  assertSafeWorkerDiagnostic(
+    diagnostics,
+    "unexpected_content_type",
+    201,
+    workerResponseBody,
+  );
+});
+
+test("logs a safe diagnostic when the Worker response is invalid JSON", async () => {
+  const workerResponseBody = "private-worker-response-body";
+  const { response, diagnostics } = await runWithWorkerResponse(
+    new Response(workerResponseBody, {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    }),
+    "198.51.100.64",
+  );
+
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), {
+    error: "Unable to save your proposal. Please try again.",
+  });
+  assertSafeWorkerDiagnostic(diagnostics, "invalid_json", 201, workerResponseBody);
+});
+
+test("logs a safe diagnostic when the Worker response body is too large", async () => {
+  const workerResponseBody = "x".repeat(1025);
+  const { response, diagnostics } = await runWithWorkerResponse(
+    new Response(workerResponseBody, {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    }),
+    "198.51.100.68",
+  );
+
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), {
+    error: "Unable to save your proposal. Please try again.",
+  });
+  assertSafeWorkerDiagnostic(diagnostics, "oversized_body", 201, workerResponseBody);
+});
+
+test("categorizes an oversized Worker body even when cancellation fails", async () => {
+  const privateCancellationError = "private-worker-cancellation-error";
+  const body = new ReadableStream({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode("x".repeat(1025)));
+    },
+    cancel() {
+      throw new Error(privateCancellationError);
+    },
+  });
+  const { response, diagnostics } = await runWithWorkerResponse(
+    new Response(body, {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    }),
+    "198.51.100.70",
+  );
+
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), {
+    error: "Unable to save your proposal. Please try again.",
+  });
+  assertSafeWorkerDiagnostic(diagnostics, "oversized_body", 201, "");
+  assert.equal(diagnostics[0].includes(privateCancellationError), false);
+});
+
+test("logs a safe diagnostic when reading the Worker response body fails", async () => {
+  const privateReadError = "private-worker-read-error";
+  const body = new ReadableStream({
+    start(controller) {
+      controller.error(new Error(privateReadError));
+    },
+  });
+  const { response, diagnostics } = await runWithWorkerResponse(
+    new Response(body, {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    }),
+    "198.51.100.71",
+  );
+
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), {
+    error: "Unable to save your proposal. Please try again.",
+  });
+  assertSafeWorkerDiagnostic(diagnostics, "unreadable_body", 201, "");
+  assert.equal(diagnostics[0].includes(privateReadError), false);
+});
+
+test("logs a safe diagnostic when the Worker response has no body", async () => {
+  const { response, diagnostics } = await runWithWorkerResponse(
+    new Response(null, {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    }),
+    "198.51.100.72",
+  );
+
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), {
+    error: "Unable to save your proposal. Please try again.",
+  });
+  assertSafeWorkerDiagnostic(diagnostics, "unreadable_body", 201, "");
+});
+
+test("logs a safe diagnostic when the Worker response omits or rejects success", async () => {
+  const workerResponseBody = "private-worker-response-body";
+  for (const [index, payload] of [
+    { diagnostic: workerResponseBody },
+    { success: false, diagnostic: workerResponseBody },
+  ].entries()) {
+    const { response, diagnostics } = await runWithWorkerResponse(
+      Response.json(payload, { status: 201 }),
+      `198.51.100.${65 + index}`,
+    );
+
+    assert.equal(response.status, 502);
+    assert.deepEqual(await response.json(), {
+      error: "Unable to save your proposal. Please try again.",
+    });
+    assertSafeWorkerDiagnostic(
+      diagnostics,
+      "missing_success",
+      201,
+      workerResponseBody,
+    );
+  }
+});
+
+test("accepts a valid Worker success response without logging a failure", async () => {
+  const { response, diagnostics } = await runWithWorkerResponse(
+    Response.json({ success: true }, { status: 201 }),
+    "198.51.100.67",
+  );
+
+  assert.equal(response.status, 201);
+  assert.deepEqual(await response.json(), { success: true });
+  assert.deepEqual(diagnostics, []);
 });
 
 test("returns a safe error when forwarding times out or fails", async () => {

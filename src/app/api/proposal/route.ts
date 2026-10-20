@@ -287,9 +287,23 @@ async function signWorkerRequest(
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
-async function readWorkerResponse(response: Response): Promise<boolean> {
+type WorkerResponseFailure =
+  | "invalid_json"
+  | "missing_success"
+  | "non_201"
+  | "oversized_body"
+  | "unexpected_content_type"
+  | "unreadable_body";
+type WorkerBodyFailure = Exclude<
+  WorkerResponseFailure,
+  "non_201" | "unexpected_content_type"
+>;
+
+async function readWorkerResponse(
+  response: Response,
+): Promise<WorkerBodyFailure | null> {
   if (!response.body) {
-    return false;
+    return "unreadable_body";
   }
 
   const reader = response.body.getReader();
@@ -307,14 +321,14 @@ async function readWorkerResponse(response: Response): Promise<boolean> {
         try {
           await reader.cancel();
         } catch {
-          return false;
+          return "oversized_body";
         }
-        return false;
+        return "oversized_body";
       }
       chunks.push(value);
     }
   } catch {
-    return false;
+    return "unreadable_body";
   } finally {
     reader.releaseLock();
   }
@@ -330,14 +344,17 @@ async function readWorkerResponse(response: Response): Promise<boolean> {
     const payload: unknown = JSON.parse(
       new TextDecoder("utf-8", { fatal: true, ignoreBOM: false }).decode(bytes),
     );
-    return (
+    if (
       typeof payload === "object" &&
       payload !== null &&
       "success" in payload &&
       payload.success === true
-    );
+    ) {
+      return null;
+    }
+    return "missing_success";
   } catch {
-    return false;
+    return "invalid_json";
   }
 }
 
@@ -415,13 +432,27 @@ export async function POST(request: Request): Promise<Response> {
     return jsonResponse({ error: "Unable to save your proposal. Please try again." }, 502);
   }
 
-  if (
-    workerResponse.status !== 201 ||
+  let workerResponseFailure: WorkerResponseFailure | null = null;
+  if (workerResponse.status !== 201) {
+    workerResponseFailure = "non_201";
+  } else if (
     workerResponse.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase() !==
-      "application/json" ||
-    !(await readWorkerResponse(workerResponse))
+    "application/json"
   ) {
-    console.error("Proposal Worker did not confirm the save.");
+    workerResponseFailure = "unexpected_content_type";
+  } else {
+    workerResponseFailure = await readWorkerResponse(workerResponse);
+  }
+
+  if (workerResponseFailure !== null) {
+    console.error(
+      JSON.stringify({
+        event: "proposal_worker_response_rejected",
+        reason: workerResponseFailure,
+        status: workerResponse.status,
+        requestId,
+      }),
+    );
     return jsonResponse({ error: "Unable to save your proposal. Please try again." }, 502);
   }
 
