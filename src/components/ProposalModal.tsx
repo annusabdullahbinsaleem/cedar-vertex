@@ -324,7 +324,7 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
       ) {
         setRequiresNewSubmissionConfirmation(true);
         setErrors({
-          form: "A previous proposal may already have been saved. Restore its original details to retry safely, or choose below to send the edited details as a separate proposal.",
+          form: "Your browser has an earlier proposal attempt that wasn't confirmed. Its original details aren't stored, so you can't restore them here. Re-enter the same details to retry safely, or choose below to send these details as a new proposal.",
         });
         return;
       }
@@ -363,15 +363,18 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
       }
 
       idempotencyRef.current = null;
-      pendingSubmissions = pendingSubmissions.filter(
-        ({ key }) => key !== idempotencyKey,
-      );
+      pendingSubmissions = allowNewSubmission
+        ? []
+        : pendingSubmissions.filter(({ key }) => key !== idempotencyKey);
       try {
         writePendingSubmissions(pendingSubmissions);
         const legacyValue = window.sessionStorage.getItem(idempotencyStorageKey);
         if (legacyValue !== null) {
           const legacy: unknown = JSON.parse(legacyValue);
-          if (isPendingSubmission(legacy) && legacy.key === idempotencyKey) {
+          if (
+            allowNewSubmission ||
+            (isPendingSubmission(legacy) && legacy.key === idempotencyKey)
+          ) {
             window.sessionStorage.removeItem(idempotencyStorageKey);
           }
         }
@@ -692,7 +695,7 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                       }}
                       className="mt-2 font-semibold underline"
                     >
-                      Send edited details as a separate proposal
+                      Submit these details as a new proposal
                     </button>
                   )}
                 </div>
