@@ -1,6 +1,13 @@
 "use client";
 
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import {
+  type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { CheckCircle2, ChevronDown, MessageCircle, X } from "lucide-react";
 import {
@@ -126,7 +133,7 @@ const timelineOptions = [
 const emailPattern = /^[A-Za-z0-9!#$%&*+/=?^_`{|}~-]+(?:'[A-Za-z0-9!#$%&*+/=?^_`{|}~-]+)*(?:\.[A-Za-z0-9!#$%&*+/=?^_`{|}~-]+(?:'[A-Za-z0-9!#$%&*+/=?^_`{|}~-]+)*)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/;
 const focusableSelector = [
   'a[href]',
-  'button:not([disabled])',
+  'button:not([disabled]):not([tabindex="-1"])',
   'textarea:not([disabled])',
   'input:not([disabled])',
   'select:not([disabled])',
@@ -138,15 +145,51 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isCountryCodeOpen, setIsCountryCodeOpen] = useState(false);
   const [requiresNewSubmissionConfirmation, setRequiresNewSubmissionConfirmation] =
     useState(false);
   const initialInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const mobileFieldRef = useRef<HTMLDivElement>(null);
+  const countryCodeButtonRef = useRef<HTMLButtonElement>(null);
+  const countryCodeOptionsRef = useRef<HTMLDivElement>(null);
+  const countryCodeOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const triggerElementRef = useRef<HTMLElement | null>(null);
   const isSubmittingRef = useRef(false);
   const idempotencyRef = useRef<{ payload: string; key: string } | null>(null);
   const allowNewSubmissionRef = useRef(false);
+
+  const closeModal = useCallback(() => {
+    setIsCountryCodeOpen(false);
+    onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!isCountryCodeOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !mobileFieldRef.current?.contains(event.target)
+      ) {
+        setIsCountryCodeOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    countryCodeOptionsRef.current?.scrollIntoView({ block: "nearest" });
+    const selectedIndex = proposalCountryCodes.findIndex(
+      ({ value }) => value === formData.countryCode,
+    );
+    countryCodeOptionRefs.current[Math.max(0, selectedIndex)]?.focus();
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isCountryCodeOpen, formData.countryCode]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -161,7 +204,7 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        closeModal();
         return;
       }
 
@@ -222,7 +265,7 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
       triggerElementRef.current?.focus();
       triggerElementRef.current = null;
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, closeModal]);
 
   const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE_NUMBER}${
     WHATSAPP_MESSAGE ? `?text=${encodeURIComponent(WHATSAPP_MESSAGE)}` : ""
@@ -249,6 +292,61 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
       [name]: undefined,
       ...(name === "countryCode" ? { mobile: undefined } : {}),
     }));
+  };
+
+  const selectCountryCode = (countryCode: string) => {
+    setFormData((current) => ({ ...current, countryCode }));
+    setErrors((current) => ({
+      ...current,
+      countryCode: undefined,
+      mobile: undefined,
+    }));
+    setIsCountryCodeOpen(false);
+    countryCodeButtonRef.current?.focus();
+  };
+
+  const handleCountryCodeKeyDown = (
+    event: ReactKeyboardEvent<HTMLDivElement>,
+  ) => {
+    if (event.key === "Escape" && isCountryCodeOpen) {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsCountryCodeOpen(false);
+      countryCodeButtonRef.current?.focus();
+      return;
+    }
+
+    if (event.key === "Tab" && isCountryCodeOpen) {
+      setIsCountryCodeOpen(false);
+      return;
+    }
+
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      const focusedOption = (event.target as HTMLElement).closest<HTMLElement>(
+        "[data-country-code-index]",
+      );
+      if (!focusedOption && event.target !== countryCodeButtonRef.current) {
+        return;
+      }
+
+      event.preventDefault();
+      if (!isCountryCodeOpen) {
+        setIsCountryCodeOpen(true);
+        return;
+      }
+
+      const selectedIndex = proposalCountryCodes.findIndex(
+        ({ value }) => value === formData.countryCode,
+      );
+      const currentIndex = focusedOption
+        ? Number(focusedOption.dataset.countryCodeIndex)
+        : Math.max(0, selectedIndex);
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+      const nextIndex =
+        (currentIndex + direction + proposalCountryCodes.length) %
+        proposalCountryCodes.length;
+      countryCodeOptionRefs.current[nextIndex]?.focus();
+    }
   };
 
   const validateForm = (data: FormData) => {
@@ -412,7 +510,7 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0f172a]/50 p-3 backdrop-blur-[1px] sm:p-6"
-      onClick={onClose}
+      onClick={closeModal}
     >
       <div
         ref={modalRef}
@@ -435,7 +533,7 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={closeModal}
             aria-label="Close proposal form"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-accent hover:text-accent-dark"
           >
@@ -466,14 +564,14 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/#work"
-                  onClick={onClose}
+                  onClick={closeModal}
                   className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
                 >
                   Explore Our Work
                 </Link>
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={closeModal}
                   className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-line px-6 py-3 text-sm font-medium text-ink transition-colors hover:border-accent hover:text-accent-dark"
                 >
                   Close
@@ -567,32 +665,39 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                   )}
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
+                <div
+                  ref={mobileFieldRef}
+                  className="space-y-1.5 sm:col-span-2"
+                  onKeyDown={handleCountryCodeKeyDown}
+                >
                   <label htmlFor="proposal-mobile" className="text-sm font-medium text-ink">
                     Mobile Number <span className="font-normal text-ink-soft">(optional)</span>
                   </label>
                   <div className="grid grid-cols-[minmax(7rem,0.9fr)_minmax(0,1.6fr)] gap-2">
                     <div className="relative">
-                      <select
+                      <button
+                        ref={countryCodeButtonRef}
+                        type="button"
                         id="proposal-country-code"
-                        name="countryCode"
-                        value={formData.countryCode}
-                        onChange={updateField}
+                        aria-haspopup="listbox"
+                        aria-expanded={isCountryCodeOpen}
+                        aria-controls="proposal-country-code-options"
                         aria-label="Mobile country calling code"
-                        className="w-full appearance-none rounded-xl border border-line bg-white px-3 py-2.5 pr-9 text-sm text-ink outline-none transition-colors focus:border-accent"
+                        onClick={() => setIsCountryCodeOpen((open) => !open)}
+                        className="flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-white px-3 py-2.5 text-left text-sm text-ink outline-none transition-colors focus:border-accent"
                       >
-                        {proposalCountryCodes.map(({ label, value }) => (
-                          <option key={value} value={value}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft"
-                        size={16}
-                        strokeWidth={2}
-                        aria-hidden="true"
-                      />
+                        <span>
+                          {proposalCountryCodes.find(
+                            ({ value }) => value === formData.countryCode,
+                          )?.label ?? "Choose code"}
+                        </span>
+                        <ChevronDown
+                          className={`shrink-0 text-ink-soft transition-transform ${isCountryCodeOpen ? "rotate-180" : ""}`}
+                          size={16}
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        />
+                      </button>
                     </div>
                     <input
                       id="proposal-mobile"
@@ -607,6 +712,31 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                       className="w-full min-w-0 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-ink-soft/70 focus:border-accent"
                       placeholder="7700 900123"
                     />
+                    <div
+                      ref={countryCodeOptionsRef}
+                      id="proposal-country-code-options"
+                      role="listbox"
+                      aria-label="Mobile country calling code"
+                      className={`col-span-2 max-h-48 overflow-y-auto rounded-xl border border-line bg-white py-1 shadow-lg ${isCountryCodeOpen ? "" : "hidden"}`}
+                    >
+                      {proposalCountryCodes.map(({ label, value }, index) => (
+                        <button
+                          key={value}
+                          ref={(element) => {
+                            countryCodeOptionRefs.current[index] = element;
+                          }}
+                          type="button"
+                          role="option"
+                          aria-selected={formData.countryCode === value}
+                          data-country-code-index={index}
+                          tabIndex={-1}
+                          onClick={() => selectCountryCode(value)}
+                          className={`flex w-full items-center px-3.5 py-2 text-left text-sm outline-none transition-colors hover:bg-accent-tint focus:bg-accent-tint ${formData.countryCode === value ? "font-medium text-accent-dark" : "text-ink"}`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   {errors.mobile && (
                     <p id="proposal-mobile-error" className="text-sm text-red-600">
