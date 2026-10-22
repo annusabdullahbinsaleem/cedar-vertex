@@ -8,6 +8,7 @@ export default defineConfig({
 		entrypoint,
 		domains: ["api.cedarvertex.com"],
 		workersDev: true,
+		previewUrls: false,
 		exports: {
 			LeadReplayGuard: exports.durableObject({ storage: "sqlite" }),
 		},
