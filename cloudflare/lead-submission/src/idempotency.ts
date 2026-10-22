@@ -1,6 +1,7 @@
 export type LeadSubmission = {
 	name: string;
 	email: string;
+	phone: string | null;
 	company: string;
 	service: string;
 	budget: string;
@@ -41,11 +42,12 @@ export async function saveLeadIdempotently(
 ): Promise<"inserted" | "duplicate" | "conflict"> {
 	const result = await db
 		.prepare(
-			"INSERT INTO leads (name, email, company, service, budget, message, timeline, idempotency_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(idempotency_key) DO NOTHING",
+			"INSERT INTO leads (name, email, phone, company, service, budget, message, timeline, idempotency_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(idempotency_key) DO NOTHING",
 		)
 		.bind(
 			submission.name,
 			submission.email,
+			submission.phone,
 			submission.company,
 			submission.service,
 			submission.budget || null,
@@ -67,7 +69,7 @@ export async function saveLeadIdempotently(
 
 	const existingLead = await db
 		.prepare(
-			"SELECT name, email, company, service, COALESCE(budget, '') AS budget, message, COALESCE(timeline, '') AS timeline FROM leads WHERE idempotency_key = ?",
+			"SELECT name, email, phone, company, service, COALESCE(budget, '') AS budget, message, COALESCE(timeline, '') AS timeline FROM leads WHERE idempotency_key = ?",
 		)
 		.bind(submission.idempotencyKey)
 		.first<ExistingLead>();
@@ -76,6 +78,7 @@ export async function saveLeadIdempotently(
 		!existingLead ||
 		existingLead.name !== submission.name ||
 		existingLead.email !== submission.email ||
+		existingLead.phone !== submission.phone ||
 		existingLead.company !== submission.company ||
 		existingLead.service !== submission.service ||
 		existingLead.budget !== submission.budget ||

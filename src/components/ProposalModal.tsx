@@ -7,6 +7,10 @@ import {
   WHATSAPP_MESSAGE,
   WHATSAPP_PHONE_NUMBER,
 } from "./WhatsAppButton";
+import {
+  normalizeProposalPhone,
+  proposalCountryCodes,
+} from "@/lib/proposal-phone";
 
 type ProposalModalProps = {
   isOpen: boolean;
@@ -17,6 +21,8 @@ type FormData = {
   name: string;
   email: string;
   company: string;
+  mobile: string;
+  countryCode: string;
   projectType: string;
   description: string;
   budget: string;
@@ -29,6 +35,8 @@ const initialFormData: FormData = {
   name: "",
   email: "",
   company: "",
+  mobile: "",
+  countryCode: "+44",
   projectType: "",
   description: "",
   budget: "",
@@ -239,6 +247,7 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
     setErrors((current) => ({
       ...current,
       [name]: undefined,
+      ...(name === "countryCode" ? { mobile: undefined } : {}),
     }));
   };
 
@@ -257,6 +266,10 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
 
     if (!data.company.trim()) {
       nextErrors.company = "Please enter your company name.";
+    }
+
+    if (normalizeProposalPhone(data.mobile, data.countryCode) === undefined) {
+      nextErrors.mobile = "Please enter a valid mobile number.";
     }
 
     if (!data.projectType.trim()) {
@@ -550,6 +563,54 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                       className="text-sm text-red-600"
                     >
                       {errors.company}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label htmlFor="proposal-mobile" className="text-sm font-medium text-ink">
+                    Mobile Number <span className="font-normal text-ink-soft">(optional)</span>
+                  </label>
+                  <div className="grid grid-cols-[minmax(7rem,0.9fr)_minmax(0,1.6fr)] gap-2">
+                    <div className="relative">
+                      <select
+                        id="proposal-country-code"
+                        name="countryCode"
+                        value={formData.countryCode}
+                        onChange={updateField}
+                        aria-label="Mobile country calling code"
+                        className="w-full appearance-none rounded-xl border border-line bg-white px-3 py-2.5 pr-9 text-sm text-ink outline-none transition-colors focus:border-accent"
+                      >
+                        {proposalCountryCodes.map(({ label, value }) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft"
+                        size={16}
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <input
+                      id="proposal-mobile"
+                      name="mobile"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel-national"
+                      value={formData.mobile}
+                      onChange={updateField}
+                      aria-invalid={Boolean(errors.mobile)}
+                      aria-describedby={errors.mobile ? "proposal-mobile-error" : undefined}
+                      className="w-full min-w-0 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-ink-soft/70 focus:border-accent"
+                      placeholder="7700 900123"
+                    />
+                  </div>
+                  {errors.mobile && (
+                    <p id="proposal-mobile-error" className="text-sm text-red-600">
+                      {errors.mobile}
                     </p>
                   )}
                 </div>

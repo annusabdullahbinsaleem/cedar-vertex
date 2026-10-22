@@ -10,6 +10,7 @@ const fieldNames = [
 	"name",
 	"email",
 	"company",
+	"phone",
 	"projectType",
 	"description",
 	"budget",
@@ -47,6 +48,7 @@ type ProposalSubmission = {
 	name: string;
 	email: string;
 	company: string;
+	phone: string | null;
 	projectType: string;
 	description: string;
 	budget: string;
@@ -184,20 +186,32 @@ function validateSubmission(value: unknown): ProposalSubmission | null {
 
 	const fields = value as Record<string, unknown>;
 	const keys = Object.keys(fields);
+	const requiredFieldNames = fieldNames.filter((field) => field !== "phone");
 	if (
-		keys.length !== fieldNames.length ||
-		keys.some((key) => !fieldNames.includes(key as (typeof fieldNames)[number]))
+		keys.some((key) => !fieldNames.includes(key as (typeof fieldNames)[number])) ||
+		requiredFieldNames.some((field) => !Object.hasOwn(fields, field))
 	) {
 		return null;
 	}
 
-	const strings = {} as Record<(typeof fieldNames)[number], string>;
-	for (const field of fieldNames) {
+	const strings = {} as Record<(typeof requiredFieldNames)[number], string>;
+	for (const field of requiredFieldNames) {
 		const fieldValue = fields[field];
 		if (typeof fieldValue !== "string") {
 			return null;
 		}
 		strings[field] = fieldValue.trim();
+	}
+
+	const phoneValue = fields.phone;
+	const phone =
+		phoneValue === undefined || phoneValue === null
+			? null
+			: typeof phoneValue === "string" && /^\+[1-9]\d{6,14}$/.test(phoneValue)
+				? phoneValue
+				: undefined;
+	if (phone === undefined) {
+		return null;
 	}
 
 	if (
@@ -222,6 +236,7 @@ function validateSubmission(value: unknown): ProposalSubmission | null {
 		name: strings.name,
 		email: strings.email.toLowerCase(),
 		company: strings.company,
+		phone,
 		projectType: strings.projectType,
 		description: strings.description,
 		budget: strings.budget,
@@ -407,6 +422,7 @@ export default {
 				name: submission.name,
 				email: submission.email,
 				company: submission.company,
+				phone: submission.phone,
 				service: submission.projectType,
 				budget: submission.budget,
 				message: submission.description,

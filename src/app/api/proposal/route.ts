@@ -1,3 +1,5 @@
+import { normalizeProposalPhone } from "../../../lib/proposal-phone.ts";
+
 const maxRequestBytes = 8 * 1024;
 const maxWorkerResponseBytes = 1024;
 const workerTimeoutMs = 5000;
@@ -9,6 +11,8 @@ const fieldNames = [
   "name",
   "email",
   "company",
+  "mobile",
+  "countryCode",
   "projectType",
   "description",
   "budget",
@@ -48,6 +52,7 @@ type ProposalSubmission = {
   name: string;
   email: string;
   company: string;
+  phone: string | null;
   projectType: string;
   description: string;
   budget: string;
@@ -185,20 +190,28 @@ function validateSubmission(value: unknown): ProposalSubmission | null {
 
   const fields = value as Record<string, unknown>;
   const keys = Object.keys(fields);
+  const requiredFieldNames = fieldNames.filter(
+    (field) => field !== "mobile" && field !== "countryCode",
+  );
   if (
-    keys.length !== fieldNames.length ||
-    keys.some((key) => !fieldNames.includes(key as (typeof fieldNames)[number]))
+    keys.some((key) => !fieldNames.includes(key as (typeof fieldNames)[number])) ||
+    requiredFieldNames.some((field) => !Object.hasOwn(fields, field))
   ) {
     return null;
   }
 
-  const strings = {} as Record<(typeof fieldNames)[number], string>;
-  for (const field of fieldNames) {
+  const strings = {} as Record<(typeof requiredFieldNames)[number], string>;
+  for (const field of requiredFieldNames) {
     const fieldValue = fields[field];
     if (typeof fieldValue !== "string") {
       return null;
     }
     strings[field] = fieldValue.trim();
+  }
+
+  const phone = normalizeProposalPhone(fields.mobile, fields.countryCode);
+  if (phone === undefined) {
+    return null;
   }
 
   if (
@@ -223,6 +236,7 @@ function validateSubmission(value: unknown): ProposalSubmission | null {
     name: strings.name,
     email: strings.email.toLowerCase(),
     company: strings.company,
+    phone,
     projectType: strings.projectType,
     description: strings.description,
     budget: strings.budget,

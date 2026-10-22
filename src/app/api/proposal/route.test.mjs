@@ -30,14 +30,14 @@ function restoreEnvironment(originals) {
   }
 }
 
-function createRequest(ip) {
+function createRequest(ip, payload = submission) {
   return new Request("https://cedarvertex.test/api/proposal", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Forwarded-For": `${ip}, 192.0.2.1`,
     },
-    body: JSON.stringify(submission),
+    body: JSON.stringify(payload),
   });
 }
 
@@ -132,7 +132,8 @@ test("signs request and idempotency identifiers and rejects redirects", async ()
     );
     assert.ok(signature);
 
-    const serializedBody = JSON.stringify(submission);
+    const serializedBody = capturedInit.body;
+    assert.deepEqual(JSON.parse(serializedBody), { ...submission, phone: null });
     const key = await crypto.subtle.importKey(
       "raw",
       new TextEncoder().encode(testSecret),
@@ -157,6 +158,73 @@ test("signs request and idempotency identifiers and rejects redirects", async ()
     );
     assert.equal(capturedInit.body, serializedBody);
     assert.equal(JSON.parse(capturedInit.body).idempotencyKey, submission.idempotencyKey);
+    assert.equal(JSON.parse(capturedInit.body).phone, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreEnvironment(originals);
+  }
+});
+
+test("normalizes an optional mobile number before forwarding it", async () => {
+  const originalFetch = globalThis.fetch;
+  const originals = {
+    PROPOSAL_WORKER_URL: process.env.PROPOSAL_WORKER_URL,
+    PROPOSAL_WORKER_SECRET: process.env.PROPOSAL_WORKER_SECRET,
+    NODE_ENV: process.env.NODE_ENV,
+  };
+  let forwardedBody;
+
+  setTestEnvironment();
+  globalThis.fetch = async (_input, init) => {
+    forwardedBody = JSON.parse(init.body);
+    return Response.json({ success: true }, { status: 201 });
+  };
+
+  try {
+    const response = await POST(
+      createRequest("198.51.100.74", {
+        ...submission,
+        mobile: "07700 (900) 123",
+        countryCode: "+44",
+      }),
+    );
+    assert.equal(response.status, 201);
+    assert.equal(forwardedBody.phone, "+447700900123");
+    assert.equal("mobile" in forwardedBody, false);
+    assert.equal("countryCode" in forwardedBody, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreEnvironment(originals);
+  }
+});
+
+test("rejects malformed optional phone details before forwarding", async () => {
+  const originalFetch = globalThis.fetch;
+  const originals = {
+    PROPOSAL_WORKER_URL: process.env.PROPOSAL_WORKER_URL,
+    PROPOSAL_WORKER_SECRET: process.env.PROPOSAL_WORKER_SECRET,
+    NODE_ENV: process.env.NODE_ENV,
+  };
+  let forwardedRequests = 0;
+
+  setTestEnvironment();
+  globalThis.fetch = async () => {
+    forwardedRequests += 1;
+    return Response.json({ success: true }, { status: 201 });
+  };
+
+  try {
+    for (const [index, phoneFields] of [
+      { mobile: "07700 CALL ME", countryCode: "+44" },
+      { mobile: "07700 900123", countryCode: "+999" },
+      { mobile: "1".repeat(41), countryCode: "+44" },
+    ].entries()) {
+      const response = await POST(
+        createRequest(`198.51.100.${75 + index}`, { ...submission, ...phoneFields }),
+      );
+      assert.equal(response.status, 422);
+    }
+    assert.equal(forwardedRequests, 0);
   } finally {
     globalThis.fetch = originalFetch;
     restoreEnvironment(originals);

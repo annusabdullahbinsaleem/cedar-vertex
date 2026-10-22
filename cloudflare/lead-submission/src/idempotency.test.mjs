@@ -12,6 +12,7 @@ const submission = {
 	name: "Test Lead",
 	email: "test@example.com",
 	company: "Example Co",
+	phone: "+447700900123",
 	service: "Website",
 	budget: "",
 	message: "Build a website",
@@ -62,6 +63,12 @@ test("same idempotency key and normalized payload inserts one lead", async () =>
 		const repeatedResult = await saveLeadIdempotently(db, submission);
 		assert.equal(firstResult, "inserted");
 		assert.equal(repeatedResult, "duplicate");
+		assert.equal(
+			sqlite
+				.prepare("SELECT phone FROM leads WHERE idempotency_key = ?")
+				.get(submission.idempotencyKey).phone,
+			submission.phone,
+		);
 		assert.equal(getLeadSaveResponse(firstResult).status, 201);
 		assert.equal(getLeadSaveResponse(repeatedResult).status, 201);
 		assert.equal(
@@ -112,7 +119,7 @@ test("same key with a different normalized payload returns conflict without inse
 		assert.equal(await saveLeadIdempotently(db, submission), "inserted");
 		const conflict = await saveLeadIdempotently(db, {
 				...submission,
-				message: "Different request",
+				phone: "+14155552671",
 			});
 		assert.equal(conflict, "conflict");
 		assert.equal(getLeadSaveResponse(conflict).status, 409);
