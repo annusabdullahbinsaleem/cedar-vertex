@@ -132,11 +132,13 @@ const timelineOptions = [
 
 type ProposalDropdownFieldProps = {
   id: string;
-  name: "budget" | "timeline";
+  name: "projectType" | "budget" | "timeline";
   label: string;
   value: string;
   options: string[];
-  onChange: (name: "budget" | "timeline", value: string) => void;
+  onChange: (name: "projectType" | "budget" | "timeline", value: string) => void;
+  error?: string;
+  required?: boolean;
 };
 
 function ProposalDropdownField({
@@ -146,6 +148,8 @@ function ProposalDropdownField({
   value,
   options,
   onChange,
+  error,
+  required = false,
 }: ProposalDropdownFieldProps) {
   const [isOpen, setIsOpen] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -229,11 +233,15 @@ function ProposalDropdownField({
         ref={buttonRef}
         type="button"
         id={id}
+        role="combobox"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={`${id}-options`}
+        aria-required={required}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-error` : undefined}
         onClick={() => setIsOpen((open) => !open)}
-        className="flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-white px-3.5 py-2.5 text-left text-sm text-ink outline-none transition-colors focus:border-accent"
+        className={`flex w-full items-center justify-between gap-2 rounded-xl border bg-white px-3.5 py-2.5 text-left text-sm text-ink outline-none transition-colors focus:border-accent ${error ? "border-red-500" : "border-line"}`}
       >
         <span>{value || "Select an option"}</span>
         <ChevronDown
@@ -245,33 +253,42 @@ function ProposalDropdownField({
       </button>
       <div
         ref={optionsRef}
-        id={`${id}-options`}
-        role="listbox"
-        aria-label={`${label} options`}
-        className={`max-h-48 overflow-y-auto rounded-xl border border-line bg-white py-1 shadow-lg ${isOpen ? "" : "hidden"}`}
+        className={`max-h-48 overflow-hidden rounded-xl border border-line bg-white p-1 pr-2 shadow-lg ${isOpen ? "" : "hidden"}`}
       >
-        {["Select an option", ...options].map((option, index) => {
-          const optionValue = index === 0 ? "" : option;
+        <div
+          id={`${id}-options`}
+          role="listbox"
+          aria-label={`${label} options`}
+          className="max-h-44 overflow-y-auto overscroll-contain px-1 py-1"
+        >
+          {["Select an option", ...options].map((option, index) => {
+            const optionValue = index === 0 ? "" : option;
 
-          return (
-            <button
-              key={optionValue || "empty"}
-              ref={(element) => {
-                optionRefs.current[index] = element;
-              }}
-              type="button"
-              role="option"
-              aria-selected={value === optionValue}
-              data-proposal-option-index={index}
-              tabIndex={-1}
-              onClick={() => selectOption(optionValue)}
-              className={`flex w-full items-center px-3.5 py-2 text-left text-sm outline-none transition-colors hover:bg-accent-tint focus:bg-accent-tint ${value === optionValue ? "font-medium text-accent-dark" : "text-ink"}`}
-            >
-              {option}
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={optionValue || "empty"}
+                ref={(element) => {
+                  optionRefs.current[index] = element;
+                }}
+                type="button"
+                role="option"
+                aria-selected={value === optionValue}
+                data-proposal-option-index={index}
+                tabIndex={-1}
+                onClick={() => selectOption(optionValue)}
+                className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-sm outline-none transition-colors hover:bg-accent-tint focus:bg-accent-tint ${value === optionValue ? "font-medium text-accent-dark" : "text-ink"}`}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
       </div>
+      {error && (
+        <p id={`${id}-error`} className="text-sm text-red-600">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -440,7 +457,10 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
     }));
   };
 
-  const updateDropdownField = (name: "budget" | "timeline", value: string) => {
+  const updateDropdownField = (
+    name: "projectType" | "budget" | "timeline",
+    value: string,
+  ) => {
     if (isSubmittingRef.current) {
       return;
     }
@@ -869,28 +889,32 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                     />
                     <div
                       ref={countryCodeOptionsRef}
-                      id="proposal-country-code-options"
-                      role="listbox"
-                      aria-label="Mobile country calling code"
-                      className={`col-span-2 max-h-48 overflow-y-auto rounded-xl border border-line bg-white py-1 shadow-lg ${isCountryCodeOpen ? "" : "hidden"}`}
+                      className={`col-span-2 max-h-48 overflow-hidden rounded-xl border border-line bg-white p-1 pr-2 shadow-lg ${isCountryCodeOpen ? "" : "hidden"}`}
                     >
-                      {proposalCountryCodes.map(({ label, value }, index) => (
-                        <button
-                          key={value}
-                          ref={(element) => {
-                            countryCodeOptionRefs.current[index] = element;
-                          }}
-                          type="button"
-                          role="option"
-                          aria-selected={formData.countryCode === value}
-                          data-country-code-index={index}
-                          tabIndex={-1}
-                          onClick={() => selectCountryCode(value)}
-                          className={`flex w-full items-center px-3.5 py-2 text-left text-sm outline-none transition-colors hover:bg-accent-tint focus:bg-accent-tint ${formData.countryCode === value ? "font-medium text-accent-dark" : "text-ink"}`}
-                        >
-                          {label}
-                        </button>
-                      ))}
+                      <div
+                        id="proposal-country-code-options"
+                        role="listbox"
+                        aria-label="Mobile country calling code"
+                        className="max-h-44 overflow-y-auto overscroll-contain px-1 py-1"
+                      >
+                        {proposalCountryCodes.map(({ label, value }, index) => (
+                          <button
+                            key={value}
+                            ref={(element) => {
+                              countryCodeOptionRefs.current[index] = element;
+                            }}
+                            type="button"
+                            role="option"
+                            aria-selected={formData.countryCode === value}
+                            data-country-code-index={index}
+                            tabIndex={-1}
+                            onClick={() => selectCountryCode(value)}
+                            className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-sm outline-none transition-colors hover:bg-accent-tint focus:bg-accent-tint ${formData.countryCode === value ? "font-medium text-accent-dark" : "text-ink"}`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   {errors.mobile && (
@@ -900,43 +924,17 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                   )}
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-1">
-                  <label htmlFor="proposal-project-type" className="text-sm font-medium text-ink">
-                    Project Type
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="proposal-project-type"
-                      name="projectType"
-                      value={formData.projectType}
-                      onChange={updateField}
-                      aria-invalid={Boolean(errors.projectType)}
-                      aria-describedby={errors.projectType ? "proposal-project-type-error" : undefined}
-                      className="w-full appearance-none rounded-xl border border-line bg-white px-3.5 py-2.5 pr-12 text-sm text-ink outline-none transition-colors focus:border-accent"
-                      required
-                    >
-                      <option value="">Select an option</option>
-                      {projectTypeOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-soft"
-                      size={16}
-                      strokeWidth={2}
-                      aria-hidden="true"
-                    />
-                  </div>
-                  {errors.projectType && (
-                    <p
-                      id="proposal-project-type-error"
-                      className="text-sm text-red-600"
-                    >
-                      {errors.projectType}
-                    </p>
-                  )}
+                <div className="sm:col-span-1">
+                  <ProposalDropdownField
+                    id="proposal-project-type"
+                    name="projectType"
+                    label="Project Type"
+                    value={formData.projectType}
+                    options={projectTypeOptions}
+                    onChange={updateDropdownField}
+                    error={errors.projectType}
+                    required
+                  />
                 </div>
               </div>
 
