@@ -130,6 +130,152 @@ const timelineOptions = [
   "Flexible / Not sure",
 ];
 
+type ProposalDropdownFieldProps = {
+  id: string;
+  name: "budget" | "timeline";
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (name: "budget" | "timeline", value: string) => void;
+};
+
+function ProposalDropdownField({
+  id,
+  name,
+  label,
+  value,
+  options,
+  onChange,
+}: ProposalDropdownFieldProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const fieldRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const optionsRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const optionValues = ["", ...options];
+  const selectedIndex = optionValues.findIndex((option) => option === value);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !fieldRef.current?.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    optionsRef.current?.scrollIntoView({ block: "nearest" });
+    optionRefs.current[Math.max(0, selectedIndex)]?.focus();
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isOpen, selectedIndex]);
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape" && isOpen) {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsOpen(false);
+      buttonRef.current?.focus();
+      return;
+    }
+
+    if (event.key === "Tab" && isOpen) {
+      setIsOpen(false);
+      return;
+    }
+
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
+      return;
+    }
+
+    const focusedOption = (event.target as HTMLElement).closest<HTMLElement>(
+      "[data-proposal-option-index]",
+    );
+    if (!focusedOption && event.target !== buttonRef.current) {
+      return;
+    }
+
+    event.preventDefault();
+    if (!isOpen) {
+      setIsOpen(true);
+      return;
+    }
+
+    const currentIndex = focusedOption
+      ? Number(focusedOption.dataset.proposalOptionIndex)
+      : Math.max(0, selectedIndex);
+    const direction = event.key === "ArrowDown" ? 1 : -1;
+    const nextIndex = (currentIndex + direction + optionValues.length) % optionValues.length;
+    optionRefs.current[nextIndex]?.focus();
+  };
+
+  const selectOption = (selectedValue: string) => {
+    onChange(name, selectedValue);
+    setIsOpen(false);
+    buttonRef.current?.focus();
+  };
+
+  return (
+    <div ref={fieldRef} className="space-y-1.5" onKeyDown={handleKeyDown}>
+      <label htmlFor={id} className="text-sm font-medium text-ink">
+        {label}
+      </label>
+      <button
+        ref={buttonRef}
+        type="button"
+        id={id}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={`${id}-options`}
+        onClick={() => setIsOpen((open) => !open)}
+        className="flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-white px-3.5 py-2.5 text-left text-sm text-ink outline-none transition-colors focus:border-accent"
+      >
+        <span>{value || "Select an option"}</span>
+        <ChevronDown
+          className={`shrink-0 text-ink-soft transition-transform ${isOpen ? "rotate-180" : ""}`}
+          size={16}
+          strokeWidth={2}
+          aria-hidden="true"
+        />
+      </button>
+      <div
+        ref={optionsRef}
+        id={`${id}-options`}
+        role="listbox"
+        aria-label={`${label} options`}
+        className={`max-h-48 overflow-y-auto rounded-xl border border-line bg-white py-1 shadow-lg ${isOpen ? "" : "hidden"}`}
+      >
+        {["Select an option", ...options].map((option, index) => {
+          const optionValue = index === 0 ? "" : option;
+
+          return (
+            <button
+              key={optionValue || "empty"}
+              ref={(element) => {
+                optionRefs.current[index] = element;
+              }}
+              type="button"
+              role="option"
+              aria-selected={value === optionValue}
+              data-proposal-option-index={index}
+              tabIndex={-1}
+              onClick={() => selectOption(optionValue)}
+              className={`flex w-full items-center px-3.5 py-2 text-left text-sm outline-none transition-colors hover:bg-accent-tint focus:bg-accent-tint ${value === optionValue ? "font-medium text-accent-dark" : "text-ink"}`}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 const emailPattern = /^[A-Za-z0-9!#$%&*+/=?^_`{|}~-]+(?:'[A-Za-z0-9!#$%&*+/=?^_`{|}~-]+)*(?:\.[A-Za-z0-9!#$%&*+/=?^_`{|}~-]+(?:'[A-Za-z0-9!#$%&*+/=?^_`{|}~-]+)*)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/;
 const focusableSelector = [
   'a[href]',
@@ -292,6 +438,15 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
       [name]: undefined,
       ...(name === "countryCode" ? { mobile: undefined } : {}),
     }));
+  };
+
+  const updateDropdownField = (name: "budget" | "timeline", value: string) => {
+    if (isSubmittingRef.current) {
+      return;
+    }
+
+    setFormData((current) => ({ ...current, [name]: value }));
+    setErrors((current) => ({ ...current, [name]: undefined }));
   };
 
   const selectCountryCode = (countryCode: string) => {
@@ -811,61 +966,23 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label htmlFor="proposal-budget" className="text-sm font-medium text-ink">
-                    Approximate Budget
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="proposal-budget"
-                      name="budget"
-                      value={formData.budget}
-                      onChange={updateField}
-                      className="w-full appearance-none rounded-xl border border-line bg-white px-3.5 py-2.5 pr-12 text-sm text-ink outline-none transition-colors focus:border-accent"
-                    >
-                      <option value="">Select an option</option>
-                      {budgetOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-soft"
-                      size={16}
-                      strokeWidth={2}
-                      aria-hidden="true"
-                    />
-                  </div>
-                </div>
+                <ProposalDropdownField
+                  id="proposal-budget"
+                  name="budget"
+                  label="Approximate Budget"
+                  value={formData.budget}
+                  options={budgetOptions}
+                  onChange={updateDropdownField}
+                />
 
-                <div className="space-y-1.5">
-                  <label htmlFor="proposal-timeline" className="text-sm font-medium text-ink">
-                    Timeline
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="proposal-timeline"
-                      name="timeline"
-                      value={formData.timeline}
-                      onChange={updateField}
-                      className="w-full appearance-none rounded-xl border border-line bg-white px-3.5 py-2.5 pr-12 text-sm text-ink outline-none transition-colors focus:border-accent"
-                    >
-                      <option value="">Select an option</option>
-                      {timelineOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-soft"
-                      size={16}
-                      strokeWidth={2}
-                      aria-hidden="true"
-                    />
-                  </div>
-                </div>
+                <ProposalDropdownField
+                  id="proposal-timeline"
+                  name="timeline"
+                  label="Timeline"
+                  value={formData.timeline}
+                  options={timelineOptions}
+                  onChange={updateDropdownField}
+                />
               </div>
 
               {errors.form && (
