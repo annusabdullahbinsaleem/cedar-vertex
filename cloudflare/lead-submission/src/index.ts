@@ -384,7 +384,7 @@ export class LeadReplayGuard extends DurableObject {
 }
 
 export default {
-	async fetch(request) {
+	async fetch(request, _env, ctx) {
 		const url = new URL(request.url);
 		if (url.pathname !== submissionPath) {
 			return jsonResponse({ error: "Not found." }, 404);
@@ -490,25 +490,26 @@ export default {
 				idempotencyKey: submission.idempotencyKey,
 			});
 			if (result === "inserted") {
-				try {
-					const email = await env.EMAIL.send(
-						createLeadNotification(submission),
-					);
-					console.log(
-						JSON.stringify({
-							event: "lead_notification_sent",
-							messageId: email.messageId,
+				ctx.waitUntil(
+					env.EMAIL.send(createLeadNotification(submission))
+						.then((email) => {
+							console.log(
+								JSON.stringify({
+									event: "lead_notification_sent",
+									messageId: email.messageId,
+								}),
+							);
+						})
+						.catch((error: unknown) => {
+							// The lead is already saved. Keep submission successful and log the email failure.
+							console.error(
+								JSON.stringify({
+									event: "lead_notification_failed",
+									code: emailErrorCode(error),
+								}),
+							);
 						}),
-					);
-				} catch (error) {
-					// The lead is already saved. Keep submission successful and log the email failure.
-					console.error(
-						JSON.stringify({
-							event: "lead_notification_failed",
-							code: emailErrorCode(error),
-						}),
-					);
-				}
+				);
 			}
 			const response = getLeadSaveResponse(result);
 			return jsonResponse(response.body, response.status);
