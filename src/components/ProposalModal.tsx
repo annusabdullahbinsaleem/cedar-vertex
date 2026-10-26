@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { CheckCircle2, ChevronDown, MessageCircle, X } from "lucide-react";
 import {
   WHATSAPP_MESSAGE,
@@ -864,9 +865,19 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                         onClick={() => setIsCountryCodeOpen((open) => !open)}
                         className="flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-white px-3 py-2.5 text-left text-sm text-ink outline-none transition-colors focus:border-accent"
                       >
-                        <span className="flex min-w-0 items-center gap-2">
-                          <span className="text-base leading-none" aria-hidden="true">
-                            {selectedCountryCode?.flag}
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span className="inline-flex shrink-0 items-center gap-0.5" aria-hidden="true">
+                            {selectedCountryCode?.flags.map((flagCode) => (
+                              <Image
+                                key={flagCode}
+                                src={`/flags/${flagCode}.svg`}
+                                alt=""
+                                width={20}
+                                height={14}
+                                unoptimized
+                                className="h-3.5 w-5 shrink-0 rounded-[2px] border border-black/10"
+                              />
+                            ))}
                           </span>
                           <span className="truncate font-medium">
                             {formData.countryCode}
@@ -904,7 +915,7 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                         className="max-h-44 overflow-y-auto overscroll-contain px-1 py-1"
                       >
                         {proposalCountryCodes.map(
-                          ({ flag, label, value }, index) => (
+                            ({ flags, label, value }, index) => (
                             <button
                               key={value}
                               ref={(element) => {
@@ -919,10 +930,20 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                               className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-sm outline-none transition-colors hover:bg-accent-tint focus:bg-accent-tint ${formData.countryCode === value ? "font-medium text-accent-dark" : "text-ink"}`}
                             >
                               <span
-                                className="mr-2 text-base leading-none"
+                                className="mr-2 inline-flex shrink-0 items-center gap-0.5"
                                 aria-hidden="true"
                               >
-                                {flag}
+                                {flags.map((flagCode) => (
+                                  <Image
+                                    key={flagCode}
+                                    src={`/flags/${flagCode}.svg`}
+                                    alt=""
+                                    width={20}
+                                    height={14}
+                                    unoptimized
+                                    className="h-3.5 w-5 shrink-0 rounded-[2px] border border-black/10"
+                                  />
+                                ))}
                               </span>
                               <span>{label}</span>
                             </button>
