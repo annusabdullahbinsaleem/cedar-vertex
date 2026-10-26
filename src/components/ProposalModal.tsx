@@ -311,6 +311,9 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
   const [isCountryCodeOpen, setIsCountryCodeOpen] = useState(false);
   const [requiresNewSubmissionConfirmation, setRequiresNewSubmissionConfirmation] =
     useState(false);
+  const selectedCountryCode = proposalCountryCodes.find(
+    ({ value }) => value === formData.countryCode,
+  );
   const initialInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -857,14 +860,17 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                         aria-haspopup="listbox"
                         aria-expanded={isCountryCodeOpen}
                         aria-controls="proposal-country-code-options"
-                        aria-label="Mobile country calling code"
+                        aria-label={`Mobile country calling code: ${selectedCountryCode?.label ?? "Choose code"}`}
                         onClick={() => setIsCountryCodeOpen((open) => !open)}
                         className="flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-white px-3 py-2.5 text-left text-sm text-ink outline-none transition-colors focus:border-accent"
                       >
-                        <span>
-                          {proposalCountryCodes.find(
-                            ({ value }) => value === formData.countryCode,
-                          )?.label ?? "Choose code"}
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span className="text-base leading-none" aria-hidden="true">
+                            {selectedCountryCode?.flag}
+                          </span>
+                          <span className="truncate font-medium">
+                            {formData.countryCode}
+                          </span>
                         </span>
                         <ChevronDown
                           className={`shrink-0 text-ink-soft transition-transform ${isCountryCodeOpen ? "rotate-180" : ""}`}
@@ -897,23 +903,31 @@ export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
                         aria-label="Mobile country calling code"
                         className="max-h-44 overflow-y-auto overscroll-contain px-1 py-1"
                       >
-                        {proposalCountryCodes.map(({ label, value }, index) => (
-                          <button
-                            key={value}
-                            ref={(element) => {
-                              countryCodeOptionRefs.current[index] = element;
-                            }}
-                            type="button"
-                            role="option"
-                            aria-selected={formData.countryCode === value}
-                            data-country-code-index={index}
-                            tabIndex={-1}
-                            onClick={() => selectCountryCode(value)}
-                            className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-sm outline-none transition-colors hover:bg-accent-tint focus:bg-accent-tint ${formData.countryCode === value ? "font-medium text-accent-dark" : "text-ink"}`}
-                          >
-                            {label}
-                          </button>
-                        ))}
+                        {proposalCountryCodes.map(
+                          ({ flag, label, value }, index) => (
+                            <button
+                              key={value}
+                              ref={(element) => {
+                                countryCodeOptionRefs.current[index] = element;
+                              }}
+                              type="button"
+                              role="option"
+                              aria-selected={formData.countryCode === value}
+                              data-country-code-index={index}
+                              tabIndex={-1}
+                              onClick={() => selectCountryCode(value)}
+                              className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-sm outline-none transition-colors hover:bg-accent-tint focus:bg-accent-tint ${formData.countryCode === value ? "font-medium text-accent-dark" : "text-ink"}`}
+                            >
+                              <span
+                                className="mr-2 text-base leading-none"
+                                aria-hidden="true"
+                              >
+                                {flag}
+                              </span>
+                              <span>{label}</span>
+                            </button>
+                          ),
+                        )}
                       </div>
                     </div>
                   </div>
