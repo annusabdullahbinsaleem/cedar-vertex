@@ -115,10 +115,10 @@ export default function Footer() {
             <ul className="mt-4 space-y-2.5 text-sm text-ink-soft">
               <li>
                 <a
-                  href="mailto:hello@cedarvertex.com"
+                  href="mailto:info@cedarvertex.com"
                   className="hover:text-accent-dark"
                 >
-                  hello@cedarvertex.com
+                  info@cedarvertex.com
                 </a>
               </li>
               <li>Bristol, United Kingdom</li>

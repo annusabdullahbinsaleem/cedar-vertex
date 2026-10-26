@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   },
 };
 
-const businessEmail = "hello@cedarvertex.com";
+const businessEmail = "info@cedarvertex.com";
 
 export default function PrivacyPolicyPage() {
   return (
