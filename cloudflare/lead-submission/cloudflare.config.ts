@@ -22,6 +22,10 @@ export default defineConfig({
 				worker: "cedar-vertex-lead-submission",
 				exportName: "LeadReplayGuard",
 			}),
+			EMAIL: bindings.sendEmail({
+				destinationAddress: "cedarvertex@gmail.com",
+				allowedSenderAddresses: ["proposals@cedarvertex.com"],
+			}),
 			PROPOSAL_SHARED_SECRET: bindings.secret(),
 		},
 		observability: {

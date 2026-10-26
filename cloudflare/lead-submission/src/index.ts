@@ -245,6 +245,66 @@ function validateSubmission(value: unknown): ProposalSubmission | null {
 	};
 }
 
+function escapeHtml(value: string): string {
+	return value
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;")
+		.replaceAll('"', "&quot;")
+		.replaceAll("'", "&#39;");
+}
+
+function createLeadNotification(submission: ProposalSubmission) {
+	const details = [
+		["Name", submission.name],
+		["Email", submission.email],
+		["Phone", submission.phone ?? "Not provided"],
+		["Company", submission.company],
+		["Project type", submission.projectType],
+		["Budget", submission.budget || "Not provided"],
+		["Timeline", submission.timeline || "Not provided"],
+		["Message", submission.description],
+	] as const;
+	const text = [
+		"A new proposal was submitted on Cedar Vertex.",
+		"",
+		...details.map(([label, value]) => `${label}: ${value}`),
+	].join("\n");
+	const html = `<!doctype html>
+<html lang="en">
+	<body style="font-family: Arial, sans-serif; color: #172033; line-height: 1.5;">
+		<h1 style="font-size: 20px;">New Cedar Vertex proposal</h1>
+		${details
+			.map(
+				([label, value]) =>
+					`<p><strong>${escapeHtml(label)}</strong><br><span style="white-space: pre-wrap;">${escapeHtml(value)}</span></p>`,
+			)
+			.join("\n")}
+	</body>
+</html>`;
+
+	return {
+		to: "cedarvertex@gmail.com",
+		from: "proposals@cedarvertex.com",
+		replyTo: submission.email,
+		subject: "New Cedar Vertex proposal",
+		text,
+		html,
+	};
+}
+
+function emailErrorCode(error: unknown): string {
+	if (
+		typeof error === "object" &&
+		error !== null &&
+		"code" in error &&
+		typeof error.code === "string"
+	) {
+		return error.code;
+	}
+	return "UNKNOWN";
+}
+
 export class LeadReplayGuard extends DurableObject {
 	constructor(ctx: DurableObjectState, env: Env) {
 		super(ctx, env);
@@ -429,6 +489,27 @@ export default {
 				timeline: submission.timeline,
 				idempotencyKey: submission.idempotencyKey,
 			});
+			if (result === "inserted") {
+				try {
+					const email = await env.EMAIL.send(
+						createLeadNotification(submission),
+					);
+					console.log(
+						JSON.stringify({
+							event: "lead_notification_sent",
+							messageId: email.messageId,
+						}),
+					);
+				} catch (error) {
+					// The lead is already saved. Keep submission successful and log the email failure.
+					console.error(
+						JSON.stringify({
+							event: "lead_notification_failed",
+							code: emailErrorCode(error),
+						}),
+					);
+				}
+			}
 			const response = getLeadSaveResponse(result);
 			return jsonResponse(response.body, response.status);
 		} catch {
