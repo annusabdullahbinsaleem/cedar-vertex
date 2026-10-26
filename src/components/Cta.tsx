@@ -17,8 +17,9 @@ export default function Cta({ onOpenProposal }: CtaProps) {
                 <span className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
                 YOUR NEXT BIG IDEA STARTS HERE
               </p>
-              <h2 className="font-display text-3xl leading-tight text-white sm:text-4xl lg:text-5xl">
-                Have an idea? <span className="text-accent">Let&apos;s build it.</span>
+              <h2 className="font-display text-3xl leading-tight text-white sm:text-4xl lg:text-4xl">
+                <span className="block">Have an idea?</span>
+                <span className="block text-accent">Let&apos;s build it.</span>
               </h2>
               <p className="mx-auto mt-5 max-w-lg text-sm leading-relaxed text-white/75 sm:text-base lg:mx-0">
                 Tell us what you&apos;re trying to build, and we&apos;ll get back
