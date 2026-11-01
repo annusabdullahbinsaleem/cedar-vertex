@@ -24,8 +24,10 @@ const idempotencyKeyPattern =
 const projectTypes = new Set([
   "Website",
   "Web App",
+  "Backend / API Development",
   "Mobile App",
   "UI/UX / Product Design",
+  "UX Audit / Accessibility",
   "SEO",
   "Branding / Graphic Design",
   "Not Sure",

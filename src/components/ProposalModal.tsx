@@ -23,6 +23,7 @@ import {
 type ProposalModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  initialProjectType?: string;
 };
 
 type FormData = {
@@ -107,8 +108,10 @@ function writePendingSubmissions(pending: PendingSubmission[]) {
 const projectTypeOptions = [
   "Website",
   "Web App",
+  "Backend / API Development",
   "Mobile App",
   "UI/UX / Product Design",
+  "UX Audit / Accessibility",
   "SEO",
   "Branding / Graphic Design",
   "Not Sure",
@@ -304,8 +307,15 @@ const focusableSelector = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(", ");
 
-export default function ProposalModal({ isOpen, onClose }: ProposalModalProps) {
-  const [formData, setFormData] = useState<FormData>(initialFormData);
+export default function ProposalModal({
+  isOpen,
+  onClose,
+  initialProjectType = "",
+}: ProposalModalProps) {
+  const [formData, setFormData] = useState<FormData>(() => ({
+    ...initialFormData,
+    projectType: initialProjectType,
+  }));
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
