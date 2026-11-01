@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { services } from "@/lib/services";
 
 function XIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -57,13 +58,6 @@ const nav = [
   { label: "Contact", href: "/#contact" },
 ];
 
-const services = [
-  "UI/UX Design",
-  "Web Development",
-  "Mobile Development",
-  "Accessibility & SEO",
-];
-
 export default function Footer() {
   return (
     <footer className="border-t border-line bg-surface px-6 pt-16 pb-20 md:pb-24 lg:px-10">
@@ -102,9 +96,14 @@ export default function Footer() {
           <div>
             <h3 className="text-sm font-medium text-ink">Services</h3>
             <ul className="mt-4 space-y-2.5">
-              {services.map((item) => (
-                <li key={item} className="text-sm text-ink-soft">
-                  {item}
+              {services.map(({ slug, title }) => (
+                <li key={slug}>
+                  <Link
+                    href={`/services/${slug}`}
+                    className="rounded-sm text-sm text-ink-soft transition-colors hover:text-accent-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
+                    {title}
+                  </Link>
                 </li>
               ))}
             </ul>
