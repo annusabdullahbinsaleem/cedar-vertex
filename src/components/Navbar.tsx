@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import Button from "./Button";
 
 const navLinks = [
-  { label: "Home", href: "/" },
-  { label: "Services", href: "/#services" },
-  { label: "Work", href: "/#work" },
-  { label: "About", href: "/#about" },
-  { label: "Contact", href: "/#contact" },
+  { label: "Home", href: "/", sectionId: "home" },
+  { label: "Services", href: "/#services", sectionId: "services" },
+  { label: "Work", href: "/#work", sectionId: "work" },
+  { label: "About", href: "/#about", sectionId: "about" },
+  { label: "Contact", href: "/#contact", sectionId: "contact" },
 ];
 
 type NavbarProps = {
@@ -20,6 +21,78 @@ type NavbarProps = {
 
 export default function Navbar({ onOpenProposal }: NavbarProps) {
   const [open, setOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("home");
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (pathname !== "/") return;
+
+    const sections = navLinks
+      .filter(({ sectionId }) => sectionId !== "home")
+      .map(({ sectionId }) => document.getElementById(sectionId))
+      .filter((section): section is HTMLElement => Boolean(section));
+
+    const header = document.getElementById("top");
+    const headerOffset = header?.getBoundingClientRect().height ?? 0;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleSection = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (visibleSection) {
+          setActiveSection(visibleSection.target.id);
+        }
+      },
+      {
+        rootMargin: `-${headerOffset}px 0px -55% 0px`,
+        threshold: [0, 0.25, 0.5, 0.75, 1],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, [pathname]);
+
+  const handleNavClick = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    sectionId: string,
+  ) => {
+    if (pathname !== "/") return;
+
+    const target = sectionId === "home" ? null : document.getElementById(sectionId);
+    if (sectionId !== "home" && !target) return;
+
+    event.preventDefault();
+    setOpen(false);
+    setActiveSection(sectionId);
+
+    if (sectionId === "home") {
+      window.history.replaceState(null, "", "/");
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+      return;
+    }
+
+    window.history.replaceState(null, "", `#${sectionId}`);
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const displayedActiveSection = pathname === "/" ? activeSection : "";
+
+  const linkClasses = (sectionId: string, mobile = false) => {
+    const isActive = displayedActiveSection === sectionId;
+    return mobile
+      ? `block rounded-md border-l-2 px-2 py-3 text-base font-medium transition-colors ${
+          isActive
+            ? "border-accent bg-accent-tint text-accent-dark"
+            : "border-transparent text-ink-soft hover:bg-accent-tint hover:text-accent-dark"
+        }`
+      : `border-b-2 pb-1 text-sm font-medium transition-colors ${
+          isActive
+            ? "border-accent text-accent-dark"
+            : "border-transparent text-ink-soft hover:border-accent/50 hover:text-accent-dark"
+        }`;
+  };
 
   return (
     <header
@@ -46,7 +119,9 @@ export default function Navbar({ onOpenProposal }: NavbarProps) {
             <li key={link.href}>
               <Link
                 href={link.href}
-                className="text-sm font-medium text-ink-soft transition-colors hover:text-accent-dark"
+                className={linkClasses(link.sectionId)}
+                aria-current={displayedActiveSection === link.sectionId ? "page" : undefined}
+                onClick={(event) => handleNavClick(event, link.sectionId)}
               >
                 {link.label}
               </Link>
@@ -82,8 +157,9 @@ export default function Navbar({ onOpenProposal }: NavbarProps) {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  onClick={() => setOpen(false)}
-                  className="block rounded-md px-2 py-3 text-base font-medium text-ink-soft hover:bg-accent-tint hover:text-accent-dark"
+                  className={linkClasses(link.sectionId, true)}
+                  aria-current={displayedActiveSection === link.sectionId ? "page" : undefined}
+                  onClick={(event) => handleNavClick(event, link.sectionId)}
                 >
                   {link.label}
                 </Link>

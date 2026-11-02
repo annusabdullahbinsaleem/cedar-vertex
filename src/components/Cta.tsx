@@ -7,7 +7,7 @@ type CtaProps = {
 
 export default function Cta({ onOpenProposal }: CtaProps) {
   return (
-    <section id="contact" className="px-6 py-20 lg:px-10 lg:py-28">
+    <section id="contact" className="scroll-mt-24 px-6 py-20 lg:px-10 lg:py-28">
       <div className="mx-auto max-w-7xl">
         <div className="relative isolate overflow-hidden rounded-3xl bg-primary px-8 py-12 sm:px-12 sm:py-14 lg:px-16 lg:py-16">
           <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-accent/15 blur-3xl" aria-hidden="true" />

@@ -35,7 +35,7 @@ const points = [
 
 export default function WhyUs() {
   return (
-    <section id="about" className="px-6 py-20 lg:px-10 lg:py-28">
+    <section id="about" className="scroll-mt-24 px-6 py-20 lg:px-10 lg:py-28">
       <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:gap-10">
         <div>
           <p className="text-sm font-medium text-accent-dark">Why Cedar Vertex</p>
