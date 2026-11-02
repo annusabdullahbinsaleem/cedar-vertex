@@ -76,12 +76,12 @@ export default function Services() {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {services.map(({ icon: Icon, title, description, slug }) => (
             <Link
               key={title}
               href={`/services/${slug}`}
-              className="group rounded-2xl border border-line bg-white p-7 transition-colors duration-200 hover:border-accent/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="group flex h-full flex-col rounded-2xl border border-line bg-white p-7 transition-colors duration-200 hover:border-accent/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-accent-tint text-primary transition-colors group-hover:bg-primary group-hover:text-white">
                 <Icon size={20} aria-hidden="true" />
@@ -90,7 +90,7 @@ export default function Services() {
               <p className="mt-2 text-sm leading-relaxed text-ink-soft">
                 {description}
               </p>
-              <span className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-accent-dark">
+              <span className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-medium text-accent-dark">
                 Explore service <span aria-hidden="true">↗</span>
               </span>
             </Link>
