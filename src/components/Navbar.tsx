@@ -32,21 +32,36 @@ export default function Navbar({ onOpenProposal }: NavbarProps) {
       .map(({ sectionId }) => document.getElementById(sectionId))
       .filter((section): section is HTMLElement => Boolean(section));
 
-    const header = document.getElementById("top");
-    const headerOffset = header?.getBoundingClientRect().height ?? 0;
+    const sectionEntries = new Map<string, IntersectionObserverEntry>();
     const observer = new IntersectionObserver(
       (entries) => {
-        const visibleSection = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            sectionEntries.set(entry.target.id, entry);
+          } else {
+            sectionEntries.delete(entry.target.id);
+          }
+        });
 
-        if (visibleSection) {
-          setActiveSection(visibleSection.target.id);
-        }
+        const viewportCenter = window.innerHeight / 2;
+        const visibleSection = [...sectionEntries.values()].sort((a, b) => {
+          const aCenter = (a.intersectionRect.top + a.intersectionRect.bottom) / 2;
+          const bCenter = (b.intersectionRect.top + b.intersectionRect.bottom) / 2;
+          return (
+            Math.abs(aCenter - viewportCenter) -
+            Math.abs(bCenter - viewportCenter)
+          );
+        })[0];
+
+        // Always set one state value, including the fallback to Home, so the
+        // previously active link is cleared as soon as its section leaves the band.
+        setActiveSection(visibleSection?.target.id ?? "home");
       },
       {
-        rootMargin: `-${headerOffset}px 0px -55% 0px`,
-        threshold: [0, 0.25, 0.5, 0.75, 1],
+        // Observe a narrow band around the visual centre of the viewport so
+        // neighbouring sections cannot remain active at the same time.
+        rootMargin: "-20% 0px -70% 0px",
+        threshold: [0, 0.01, 0.5, 1],
       },
     );
 
