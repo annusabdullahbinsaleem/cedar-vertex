@@ -58,9 +58,9 @@ export default function Navbar({ onOpenProposal }: NavbarProps) {
         setActiveSection(visibleSection?.target.id ?? "home");
       },
       {
-        // Observe a narrow band around the visual centre of the viewport so
-        // neighbouring sections cannot remain active at the same time.
-        rootMargin: "-20% 0px -70% 0px",
+        // Activate a section once it enters the main reading area, before it
+        // reaches the top edge, while keeping the active band focused.
+        rootMargin: "-35% 0px -45% 0px",
         threshold: [0, 0.01, 0.5, 1],
       },
     );
