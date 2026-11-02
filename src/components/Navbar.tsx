@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
@@ -22,7 +22,35 @@ type NavbarProps = {
 export default function Navbar({ onOpenProposal }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+  const isClickScrolling = useRef(false);
+  const clickScrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollEndHandler = useRef<(() => void) | null>(null);
   const pathname = usePathname();
+
+  const clearClickScrollLock = () => {
+    isClickScrolling.current = false;
+    if (clickScrollTimeout.current) {
+      clearTimeout(clickScrollTimeout.current);
+      clickScrollTimeout.current = null;
+    }
+    if (scrollEndHandler.current) {
+      window.removeEventListener("scrollend", scrollEndHandler.current);
+      scrollEndHandler.current = null;
+    }
+  };
+
+  const lockClickScroll = () => {
+    clearClickScrollLock();
+    isClickScrolling.current = true;
+
+    const unlock = () => clearClickScrollLock();
+    scrollEndHandler.current = unlock;
+    window.addEventListener("scrollend", unlock, { once: true });
+    // Keep a fallback for browsers that do not dispatch scrollend.
+    clickScrollTimeout.current = setTimeout(unlock, 1200);
+  };
+
+  useEffect(() => () => clearClickScrollLock(), []);
 
   useEffect(() => {
     if (pathname !== "/") return;
@@ -42,6 +70,8 @@ export default function Navbar({ onOpenProposal }: NavbarProps) {
             sectionEntries.delete(entry.target.id);
           }
         });
+
+        if (isClickScrolling.current) return;
 
         const viewportCenter = window.innerHeight / 2;
         const visibleSection = [...sectionEntries.values()].sort((a, b) => {
@@ -80,6 +110,7 @@ export default function Navbar({ onOpenProposal }: NavbarProps) {
 
     event.preventDefault();
     setOpen(false);
+    lockClickScroll();
     setActiveSection(sectionId);
 
     if (sectionId === "home") {
