@@ -1,29 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
-
-const projects = [
-  {
-    name: "Marlow & Co.",
-    image: "/images/portfolio/ez-beauty-banner.png",
-    category: "E-commerce · Web Development",
-    description:
-      "A rebuilt online store for a homeware retailer, cutting page load times and lifting mobile conversion.",
-  },
-  {
-    name: "Harbourline Health",
-    image: "/images/portfolio/instant-pay-banner.png",
-    category: "Product Design · Accessibility",
-    description:
-      "An appointment-booking platform redesigned around an AA accessibility standard, used across 12 clinics.",
-  },
-  {
-    name: "Fenwick Transit",
-    image: "/images/portfolio/tohito-banner.png",
-    category: "Mobile App · UX",
-    description:
-      "A journey-planning app for a regional transport operator, built for iOS and Android from one codebase.",
-  },
-];
+import Link from "next/link";
+import { caseStudies } from "@/lib/case-studies";
 
 export default function Work() {
   return (
@@ -37,28 +15,21 @@ export default function Work() {
             </h2>
           </div>
           <p className="max-w-sm text-sm text-ink-soft">
-            A sample of the kind of work we do — full case studies available
-            on request as our portfolio grows.
+            Explore the products, decisions and digital experiences behind our recent work.
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {projects.map((project) => (
+          {caseStudies.map((project) => (
             <article
               key={project.name}
-              className="overflow-hidden rounded-2xl border border-line bg-white"
+              className="group overflow-hidden rounded-2xl border border-line bg-white"
             >
               <div
                 className="relative aspect-[2/1] w-full overflow-hidden"
                 aria-hidden="true"
               >
-                <Image
-                  src={project.image}
-                  alt=""
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 33vw"
-                  className="object-cover"
-                />
+                <Image src={project.heroImage} alt={`${project.name} project`} fill sizes="(max-width: 1024px) 100vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
               </div>
               <div className="p-6">
                 <p className="text-xs font-medium uppercase tracking-wide text-accent-dark">
@@ -68,12 +39,11 @@ export default function Work() {
                   {project.name}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-                  {project.description}
+                  {project.summary}
                 </p>
-                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-accent-dark">
-                  View project
-                  <ArrowRight size={15} aria-hidden="true" />
-                </span>
+                <Link href={`/work/${project.slug}`} className="group mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-accent-dark" aria-label={`Read the ${project.name} case study`}>
+                  View case study <ArrowRight size={15} aria-hidden="true" className="transition-transform group-hover:translate-x-1" />
+                </Link>
               </div>
             </article>
           ))}
