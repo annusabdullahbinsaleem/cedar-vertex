@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowDown, ArrowLeft, ArrowRight, Check } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import CaseStudyShell, { ProposalModalTrigger } from "@/components/CaseStudyShell";
 import { caseStudies, getCaseStudyBySlug, type CaseScreen } from "@/lib/case-studies";
 import { notFound } from "next/navigation";
 
@@ -63,8 +62,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
   const isWebProduct = study.heroScreens[0].device === "desktop";
 
   return (
-    <>
-      <Navbar />
+    <CaseStudyShell>
       <main id="main-content">
         <section className="overflow-hidden px-6 pb-16 pt-6 lg:px-10 lg:pb-24" style={{ background: `radial-gradient(ellipse at 76% 38%, ${study.accent}20 0%, transparent 38%), linear-gradient(145deg, #ffffff 0%, #f6f7f8 72%, ${study.accent}0d 100%)` }}>
           <div className="mx-auto max-w-7xl">
@@ -125,11 +123,10 @@ export default async function CaseStudyPage({ params }: PageProps) {
 
         <section className="px-6 py-20 lg:px-10 lg:py-28"><div className="mx-auto grid max-w-7xl items-start gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:gap-24"><div><p className="text-sm font-semibold" style={{ color: study.accent }}>04 / The result</p><h2 className="mt-4 font-display text-3xl leading-tight text-ink sm:text-4xl">A product with a clearer point of view.</h2></div><p className="max-w-3xl text-xl leading-relaxed text-ink-soft">{study.outcome}</p></div></section>
 
-        <section className="px-6 pb-20 lg:px-10 lg:pb-28"><div className="mx-auto flex max-w-7xl flex-col gap-8 rounded-3xl bg-primary px-8 py-10 text-white sm:px-12 sm:py-12 md:flex-row md:items-center md:justify-between"><div><p className="text-sm font-medium text-accent">Have a project in mind?</p><h2 className="mt-3 font-display text-3xl text-white sm:text-4xl">Let&apos;s make it happen.</h2></div><Link href="/#contact" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-primary transition hover:bg-accent hover:text-primary-dark">Talk to our team <ArrowRight size={17} aria-hidden="true" /></Link></div></section>
+        <section className="px-6 pb-20 lg:px-10 lg:pb-28"><div className="mx-auto flex max-w-7xl flex-col gap-8 rounded-3xl bg-primary px-8 py-10 text-white sm:px-12 sm:py-12 md:flex-row md:items-center md:justify-between"><div><p className="text-sm font-medium text-accent">Have a project in mind?</p><h2 className="mt-3 font-display text-3xl text-white sm:text-4xl">Let&apos;s make it happen.</h2></div><ProposalModalTrigger className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-primary transition hover:bg-accent hover:text-primary-dark">Talk to our team <ArrowRight size={17} aria-hidden="true" /></ProposalModalTrigger></div></section>
 
         <section className="border-t border-line px-6 py-8 lg:px-10"><div className="mx-auto flex max-w-7xl items-center justify-between gap-6"><Link href="/#work" className="inline-flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-accent-dark"><ArrowLeft size={16} aria-hidden="true" /> All projects</Link><Link href={`/work/${nextStudy.slug}`} className="text-right"><span className="block text-xs uppercase tracking-wider text-ink-soft">Next case study</span><span className="mt-1 inline-flex items-center gap-2 font-display text-lg text-ink">{nextStudy.name}<ArrowRight size={16} aria-hidden="true" /></span></Link></div></section>
       </main>
-      <Footer />
-    </>
+    </CaseStudyShell>
   );
 }
